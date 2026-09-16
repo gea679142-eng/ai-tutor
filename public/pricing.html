@@ -112,8 +112,8 @@ function renderPacks(){
 async function load(){
   try{
     var d=await Auth.me(); me=d.user;
-    var p=await Auth.get('/api/plans'); packs=p.data.packs;
-    paintBalance(); renderPacks();
+    var p=await Auth.get('/api/plans'); packs=p.packs;
+    me=p.user||me; paintBalance(); renderPacks();
   }catch(e){ console.error(e); }
 }
 function pm(id,txt,cls){var el=document.getElementById(id);el.textContent=txt;el.className='msg '+(cls||'');}
