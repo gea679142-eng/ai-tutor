@@ -107,23 +107,30 @@ function loadData() {
 }
 function saveData(data) { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); }
 
-// ============ 账号/订阅/兑换码 数据库（JSON 持久化，零原生依赖） ============
-const DB_FILE = path.join(__dirname, 'db.json');
-function loadDB() {
+// ============ 账号/订阅/兑换码 数据库（Neon Postgres 持久化） ============
+const { Pool } = require('pg');
+const pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+async function pgLoad() {
   try {
-    const d = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    d.users = d.users || {}; d.tokens = d.tokens || {}; d.codes = d.codes || {}; d.orders = d.orders || [];
-    return d;
-  } catch { return { users: {}, tokens: {}, codes: {}, orders: [] }; }
+    await pgPool.query(`CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value JSONB)`);
+    const r = await pgPool.query(`SELECT value FROM kv WHERE key='db'`);
+    if (r.rows[0] && r.rows[0].value) return r.rows[0].value;
+  } catch (e) { console.error('PG load fail:', e.message); }
+  return { users: {}, tokens: {}, codes: {}, orders: [] };
 }
-let db = loadDB();
-// 清理历史脏订单：未支付(pending)与本地联调(mock)单不进后台；只保留真实支付/兑换成功记录
-(function cleanOrders() {
-  const before = db.orders.length;
-  db.orders = db.orders.filter(o => o.status === 'paid' && o.channel !== 'mock');
-  if (db.orders.length !== before) saveDB();
-})();
-function saveDB() { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
+async function pgSave(d) {
+  try {
+    await pgPool.query(`INSERT INTO kv(key,value) VALUES('db',$1) ON CONFLICT(key) DO UPDATE SET value=$1`, [JSON.stringify(d)]);
+  } catch (e) { console.error('PG save fail:', e.message); }
+}
+let db = { users: {}, tokens: {}, codes: {}, orders: [] };
+pgLoad().then(d => { db = d; console.log('DB loaded, users:', Object.keys(db.users).length); });
+let saveTimer = null;
+function saveDB() {
+  // 防抖 500ms，批量写
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { pgSave(db); }, 500);
+}
 
 // 密码哈希（node 内置 scrypt，无需 bcrypt 原生编译）
 function hashPassword(password, salt) {
