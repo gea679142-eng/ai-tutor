@@ -743,9 +743,10 @@ app.post('/api/pay/whop/start', orderLimiter, async (req, res) => {
   const orderId = 'whop-' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
   db.orders.push({ id: orderId, email: u.email, pack: packId, channel: 'whop', amount: pack.usd, currency: 'USD', status: 'pending', createdAt: new Date().toISOString() });
   saveDB();
-  // 直接跳 Whop 托管的支付页（purchase_url），metadata 随 URL 传递，webhook 回调时带回
+  // 直接跳 Whop 托管的支付页（purchase_url），强制 USD 显示，metadata 随 URL 传递
   const checkoutUrl = 'https://whop.com/checkout/' + pack.planId
-    + '?metadata[order_id]=' + encodeURIComponent(orderId)
+    + '?currency=USD'
+    + '&metadata[order_id]=' + encodeURIComponent(orderId)
     + '&metadata[email]=' + encodeURIComponent(u.email)
     + '&metadata[pack]=' + encodeURIComponent(packId);
   res.json({ ok: true, orderId, checkoutUrl });
