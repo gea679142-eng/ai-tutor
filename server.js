@@ -140,9 +140,9 @@ const TRIAL_DAYS = 3;                                     // 新注册免费试�
 // 1 积分 ≈ 1 分钟对话（4 轮 × 15 秒）。充值档位：$9.9→50 / $19.9→120 / $39.9→400。
 // 消耗：对话/跟读 0.25 积分/轮；做题/重听 0.05 积分/次。积分永久有效，扣完即停。
 const CREDIT_PACKS = {
-  pack50:  { usd: 9.9,  credits: 30,  label: 'Starter · 30 credits (~30 min)' },
-  pack120: { usd: 19.9, credits: 100, label: 'Pro · 100 credits (~100 min)' },
-  pack400: { usd: 39.9, credits: 250, label: 'VIP · 250 credits (~4 hr)' },
+  pack50:  { usd: 9.9,  credits: 30,  label: 'Starter · 30 credits (~30 min)', productId: process.env.WHOP_PRODUCT_PACK50 || '' },
+  pack120: { usd: 19.9, credits: 100, label: 'Pro · 100 credits (~100 min)', productId: process.env.WHOP_PRODUCT_PACK120 || '' },
+  pack400: { usd: 39.9, credits: 250, label: 'VIP · 250 credits (~4 hr)', productId: process.env.WHOP_PRODUCT_PACK400 || '' },
 };
 const CHAT_COST = 0.25;   // 对话一轮 / 跟读打分
 const QUIZ_COST = 0.05;   // 做题 / 重听
@@ -735,27 +735,30 @@ app.post('/api/webhooks/nowpayments', express.raw({ type: '*/*', limit: '1mb' })
 // ---- 发起 Whop 订阅结账（服务端代建 checkout configuration，拿回跳转地址）----
 app.post('/api/pay/whop/start', orderLimiter, async (req, res) => {
   const u = authUser(req); if (!u) return res.status(401).json({ error: 'not_logged_in' });
-  const plan = String(req.body.plan || ''); if (!PLAN_DAYS[plan]) return res.status(400).json({ error: 'bad_plan' });
+  const packId = String(req.body.pack || 'pack120');
+  const pack = CREDIT_PACKS[packId];
+  if (!pack) return res.status(400).json({ error: 'bad_pack' });
   if (!PAY.whopKey || !PAY.whopAccount) return res.status(503).json({ error: 'whop_not_configured' });
+  if (!pack.productId) return res.status(503).json({ error: 'whop_product_not_configured', pack: packId });
   const orderId = 'whop-' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
-  const price = PLAN_PRICE[plan].usd;
-  db.orders.push({ id: orderId, email: u.email, plan, channel: 'whop', amount: price, currency: 'USD', status: 'pending', createdAt: new Date().toISOString() });
+  db.orders.push({ id: orderId, email: u.email, pack: packId, channel: 'whop', amount: pack.usd, currency: 'USD', status: 'pending', createdAt: new Date().toISOString() });
   saveDB();
   try {
     const base = PAY.whopSandbox ? 'https://api.sandbox.whop.com' : 'https://api.whop.com';
-    const r = await fetch(base + '/api/v1/checkout_configurations', {
+    const r = await fetch(base + '/api/v1/checkout_sessions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + PAY.whopKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        product_id: pack.productId,
         account_id: PAY.whopAccount,
-        plan: { initial_price: price, plan_type: 'renewal' },
-        metadata: { order_id: orderId, email: u.email, plan }
+        metadata: { order_id: orderId, email: u.email, pack: packId },
+        success_url: (process.env.PUBLIC_BASE || 'https://ai-tutor-jqnp.onrender.com') + '/pricing.html?paid=' + orderId,
       })
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { db.orders = db.orders.filter(o => o.id !== orderId); saveDB(); return res.status(502).json({ error: 'whop_create_failed', detail: j }); }
-    const checkoutUrl = j.purchase_url || (j.plan && j.plan.purchase_url) || null;
-    res.json({ ok: true, orderId, checkoutUrl, sessionId: j.id, planId: j.plan && j.plan.id });
+    const checkoutUrl = j.url || (j.plan && j.plan.purchase_url) || null;
+    res.json({ ok: true, orderId, checkoutUrl, sessionId: j.id });
   } catch (e) {
     res.status(502).json({ error: 'whop_error', detail: String(e) });
   }

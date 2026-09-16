@@ -118,19 +118,16 @@ async function load(){
 }
 function pm(id,txt,cls){var el=document.getElementById(id);el.textContent=txt;el.className='msg '+(cls||'');}
 async function pay(){
-  var btn=document.getElementById('payBtn'); btn.disabled=true; btn.textContent='Processing...';
-  // 本地沙箱模拟支付（生产接 Whop checkout）
-  var s=await Auth.post('/api/order/mock-pay',{pack:selected});
+  var btn=document.getElementById('payBtn'); btn.disabled=true; btn.textContent='Redirecting to Whop...';
+  var s=await Auth.post('/api/pay/whop/start',{pack:selected});
   btn.disabled=false; btn.textContent='Pay with Whop';
-  if(s.ok){ pm('payMsg','✓ Credits added! Redirecting...','ok'); me=s.data.user; paintBalance(); setTimeout(function(){location.href='/chat.html';},1200); }
-  else pm('payMsg','Payment failed: '+(s.data&&s.data.error),'err');
+  if(s.ok && s.data.checkoutUrl){ pm('payMsg','✓ Redirecting to Whop checkout...','ok'); window.location.href=s.data.checkoutUrl; }
+  else pm('payMsg','Payment failed: '+(s.data&&(s.data.error||s.data.detail)),'err');
 }
 async function payCrypto(){
-  var btn=document.getElementById('payCryptoBtn'); btn.disabled=true;
-  var s=await Auth.post('/api/order/mock-pay',{pack:selected});
+  var btn=document.getElementById('payCryptoBtn'); btn.disabled=true; btn.textContent='Coming soon...';
   btn.disabled=false;
-  if(s.ok){ pm('payMsg','✓ Credits added! Redirecting...','ok'); me=s.data.user; paintBalance(); setTimeout(function(){location.href='/chat.html';},1200); }
-  else pm('payMsg','Crypto payment not configured yet','err');
+  pm('payMsg','Crypto payment (NOWPayments) not configured yet. Use Whop checkout below.','err');
 }
 async function redeem(){
   var code=document.getElementById('codeInput').value.trim();
