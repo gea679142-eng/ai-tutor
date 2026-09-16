@@ -802,9 +802,12 @@ function genCodeStr(type) {
 }
 app.post('/api/admin/codes/generate', (req, res) => {
   if (!adminOk(req)) return res.status(403).json({ error: '管理密钥错误' });
-  const type = String(req.body.type || 'week');
+  const type = String(req.body.type || 'pack120');
   const count = Math.min(500, Math.max(1, parseInt(req.body.count, 10) || 1));
-  if (!PLAN_DAYS[type]) return res.status(400).json({ error: '类型错误' });
+  // 支持积分包 pack50/pack120/pack400，或直接数字积分数
+  const validPack = CREDIT_PACKS[type];
+  const validNum = /^\d+$/.test(type) && parseInt(type, 10) > 0;
+  if (!validPack && !validNum) return res.status(400).json({ error: '类型错误: 用 pack50/pack120/pack400 或纯数字积分数' });
   const batch = 'B' + Date.now();
   const created = [];
   for (let i = 0; i < count; i++) {
