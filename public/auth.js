@@ -1,9 +1,21 @@
 // ============ 全局账号/订阅 公共脚本 ============
 var Auth = {
   tokenKey: 'tutor_token',
-  getToken: function () { return localStorage.getItem(this.tokenKey) || ''; },
-  setToken: function (t) { localStorage.setItem(this.tokenKey, t); },
-  clear: function () { localStorage.removeItem(this.tokenKey); },
+  getToken: function () {
+    try { var t = localStorage.getItem(this.tokenKey); if (t) return t; } catch (e) {}
+    // cookie 后备（手机浏览器清 localStorage 时）
+    var m = document.cookie.match(/(?:^|;\s*)tutor_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  },
+  setToken: function (t) {
+    try { localStorage.setItem(this.tokenKey, t); } catch (e) {}
+    // cookie 存 30 天
+    document.cookie = 'tutor_token=' + encodeURIComponent(t) + ';path=/;max-age=2592000;samesite=lax';
+  },
+  clear: function () {
+    try { localStorage.removeItem(this.tokenKey); } catch (e) {}
+    document.cookie = 'tutor_token=;path=/;max-age=0';
+  },
 
   // 带鉴权的 fetch
   api: function (url, opts) {
