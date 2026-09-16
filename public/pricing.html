@@ -55,6 +55,7 @@
   <div class="packs" data-fx id="packs"></div>
   <button class="btn warm" id="payBtn" onclick="pay()">Pay with Whop</button>
   <button class="btn ghost" onclick="payCrypto()" style="margin-top:8px">Pay with Crypto</button>
+  <button class="btn ghost" onclick="testPay()" style="margin-top:8px;border-style:dashed;border-color:var(--brand)">🧪 Test payment (demo card)</button>
   <div class="msg" id="payMsg"></div>
 
   <div class="cost-table" data-fx>
@@ -128,6 +129,31 @@ async function payCrypto(){
   var btn=document.getElementById('payCryptoBtn'); btn.disabled=true; btn.textContent='Coming soon...';
   btn.disabled=false;
   pm('payMsg','Crypto payment (NOWPayments) not configured yet. Use Whop checkout below.','err');
+}
+// 测试支付：弹出卡片输入，用测试卡 4242 模拟完整支付流程
+async function testPay(){
+  var card = prompt('TEST MODE — Enter test card number:\n\nCard: 4242 4242 4242 4242\nExp: 12/30  CVC: 123','4242 4242 4242 4242');
+  if(!card) return;
+  var btn=document.getElementById('payBtn'); btn.disabled=true; btn.textContent='Processing test payment...';
+  try {
+    var s1=await Auth.post('/api/pay/test/start',{pack:selected});
+    if(!s1.ok) throw new Error(s1.data&&s1.data.error||'start_failed');
+    var orderId=s1.data.orderId;
+    pm('payMsg','✓ Order created. Processing card...','ok');
+    await new Promise(r=>setTimeout(r,1200));
+    var s2=await Auth.post('/api/pay/test/complete',{orderId:orderId,card:card});
+    btn.disabled=false; btn.textContent='Pay with Whop';
+    if(s2.ok){
+      pm('payMsg','✓ Payment successful! +'+s2.data.added+' credits. Balance: '+s2.data.credits,'ok');
+      var meResp=await Auth.get('/api/auth/me'); me=meResp.user; paintBalance();
+      setTimeout(function(){location.href='/chat.html';},1500);
+    } else {
+      pm('payMsg','Payment failed: '+(s2.data&&(s2.data.error||s2.data.message||s2.data)),'err');
+    }
+  } catch(e){
+    btn.disabled=false; btn.textContent='Pay with Whop';
+    pm('payMsg','Error: '+e.message,'err');
+  }
 }
 async function redeem(){
   var code=document.getElementById('codeInput').value.trim();

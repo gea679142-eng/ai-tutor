@@ -780,7 +780,33 @@ app.post('/api/pay/nowpay/start', orderLimiter, async (req, res) => {
   }
 });
 
-// ---- 健康检查（UptimeRobot/cron 每 ~10 分钟 ping 一次，防止 Render 免费层 15 分钟休眠冷启动）----
+// ---- 测试支付：模拟 Whop 沙箱完整支付流程（不扣真钱，用测试卡 4242）----
+// 第一步：创建测试订单
+app.post('/api/pay/test/start', orderLimiter, (req, res) => {
+  const u = authUser(req); if (!u) return res.status(401).json({ error: 'not_logged_in' });
+  const packId = String(req.body.pack || '');
+  const pack = CREDIT_PACKS[packId];
+  if (!pack) return res.status(400).json({ error: 'bad_pack' });
+  const orderId = 'test-' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
+  db.orders.push({ id: orderId, email: u.email, pack: packId, channel: 'test', amount: pack.usd, currency: 'USD', status: 'pending', createdAt: new Date().toISOString() });
+  saveDB();
+  res.json({ ok: true, orderId, pack: packId, amount: pack.usd, credits: pack.credits, testCard: '4242 4242 4242 4242', exp: '12/30', cvc: '123' });
+});
+
+// 第二步：模拟支付成功（验证测试卡号后调 fulfillOrder，和 Whop webhook 走同一套加积分逻辑）
+app.post('/api/pay/test/complete', orderLimiter, (req, res) => {
+  const u = authUser(req); if (!u) return res.status(401).json({ error: 'not_logged_in' });
+  const orderId = String(req.body.orderId || '');
+  const card = String(req.body.card || '').replace(/[\s-]/g, '');
+  const order = findOrderById(orderId);
+  if (!order || order.email !== u.email) return res.status(404).json({ error: 'order_not_found' });
+  // 测试卡号：4242424242424242（Whop/Stripe 通用成功测试卡）
+  if (card !== '4242424242424242') return res.status(400).json({ error: 'card_declined', message: 'Card declined. Use test card 4242 4242 4242 4242.' });
+  // 走和 Whop webhook 完全一样的加积分逻辑（幂等）
+  fulfillOrder(u.email, order.pack, orderId, { channel: 'test', amount: order.amount, currency: 'USD', test: true });
+  const nu = db.users[u.email];
+  res.json({ ok: true, credits: nu.credits, added: CREDIT_PACKS[order.pack].credits, message: 'Payment successful! Credits added.' });
+});
 app.get('/health', (req, res) => res.status(200).json({ ok: true, ts: Date.now(), uptime: process.uptime() }));
 
 // ---- 本地沙箱：模拟一次"已付款"回调（不真实扣款；仅开发/联调，生产 NODE_ENV=production 自动关闭）----
