@@ -100,7 +100,7 @@ var me=null, selected='pack120', packs={};
 function paintBalance(){
   var c=(me&&me.credits)||0;
   document.getElementById('balBig').textContent=c+' 积分';
-  document.getElementById('balMin').textContent='≈ '+Math.round(c/4)+' minutes of chat';
+  document.getElementById('balMin').textContent='≈ '+Math.round(c/15)+' minutes of chat';
 }
 function renderPacks(){
   var el=document.getElementById('packs'); el.innerHTML='';
@@ -109,7 +109,7 @@ function renderPacks(){
     var p=packs[id]; if(!p) return;
     var d=document.createElement('div');
     d.className='pack'+(selected===id?' selected':'');
-    var mins=Math.round(p.credits/4);
+    var mins=Math.round(p.credits/15); // 5积分/轮 × 20秒/轮 = 15秒/积分
     var minsLabel=mins>=60? (Math.floor(mins/60)+'h '+mins%60+'m') : mins+' min';
     d.innerHTML='<div class="ic">'+(id==='pack50'?'🌱':id==='pack120'?'⭐':'👑')+'</div>'
       +'<div class="info"><div class="nm">'+p.label.split(' · ')[0]+'</div>'
