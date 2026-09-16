@@ -96,6 +96,8 @@ function langCn(code) { return LANG_CN[code] || '英语'; }
 function asEnum(v, allow, dft) { return allow.indexOf(v) >= 0 ? v : dft; }
 function cleanStr(v, max) { const s = String(v == null ? '' : v); return s.length > max ? s.slice(0, max) : s; }
 
+// 隐藏旧 admin 路径，防止扫描器猜到
+app.use('/admin.html', (req, res) => res.status(404).end('Not found'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============ 数据存储 ============
