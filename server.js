@@ -150,8 +150,8 @@ const MIN_CREDITS = CHAT_COST; // 低于此值禁止对话
 // 兼容旧订阅字段（老数据不删），新逻辑全部走 credits
 const PLAN_DAYS = { week: 7, month: 30 };
 // 支付网关接入前的"本地直开/模拟支付"仅用于联调：生产环境(NODE_ENV=production)默认关闭，防止登录即免费开通；
-// 本地默认开放；如生产临时需要，必须显式设置 ALLOW_LOCAL_GRANT=true。
-const ALLOW_LOCAL_GRANT = process.env.ALLOW_LOCAL_GRANT === 'true' || process.env.NODE_ENV !== 'production';
+// 生产环境必须显式设置 ALLOW_LOCAL_GRANT=true 才允许 mock/direct 免费开通（默认关）
+const ALLOW_LOCAL_GRANT = process.env.ALLOW_LOCAL_GRANT === 'true';
 
 // 订阅状态机：试用 + 正式订阅取较晚到期时间，用时现算，到期自动失效
 function subscriptionOf(u) {
@@ -785,7 +785,7 @@ app.get('/health', (req, res) => res.status(200).json({ ok: true, ts: Date.now()
 
 // ---- 本地沙箱：模拟一次"已付款"回调（不真实扣款；仅开发/联调，生产 NODE_ENV=production 自动关闭）----
 app.post('/api/dev/simulate-paid', (req, res) => {
-  if (process.env.NODE_ENV === 'production') return res.status(403).end('disabled');
+  if (!ALLOW_LOCAL_GRANT) return res.status(403).end('disabled');
   const u = authUser(req); if (!u) return res.status(401).json({ error: 'not_logged_in' });
   const plan = String(req.body.plan || ''); if (!PLAN_DAYS[plan]) return res.status(400).json({ error: 'bad_plan' });
   const orderId = 'devsim-' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
@@ -1318,15 +1318,15 @@ async function maybeUpdateMemory(u) {
 // ============ 对话历史 & 学习进度 ============
 // 拉取当前用户的可回看对话（可按模式/课程过滤），进入对话页时恢复"聊到哪了"
 app.get('/api/history', async (req, res) => {
-  const u = requireActive(req, res);
-  if (!u) return;
+  const u = authUser(req);
+  if (!u) return res.status(401).json({ error: 'not_logged_in' });
   const mode = req.query.mode;
   const courseId = req.query.course || null;
   let list = u.messages || [];
   if (mode) list = list.filter(m => m.mode === mode && (!courseId || m.courseId === courseId));
   list = list.slice(-100);
-  // 懒补译：历史里任何缺双语字幕的消息（旧数据/模型曾漏字段）按方向分组批量补齐并回写，保证刷新后双语完整
-  try {
+  // 懒补译：仅当用户有积分时才做（避免无积分用户触发翻译成本）
+  if ((u.credits || 0) >= MIN_CREDITS) try {
     const nat = u.nativeLang || 'en';
     const tgt = u.targetLang || 'zh';
     const groups = new Map();
