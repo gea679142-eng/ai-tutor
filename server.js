@@ -743,30 +743,12 @@ app.post('/api/pay/whop/start', orderLimiter, async (req, res) => {
   const orderId = 'whop-' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
   db.orders.push({ id: orderId, email: u.email, pack: packId, channel: 'whop', amount: pack.usd, currency: 'USD', status: 'pending', createdAt: new Date().toISOString() });
   saveDB();
-  // 用 checkout_sessions API 直接创建支付会话，跳到 Whop 原生支付页（信用卡/Apple Pay/Google Pay 等）
-  try {
-    const base = 'https://api.whop.com';
-    const r = await fetch(base + '/api/v1/checkout_sessions', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + PAY.whopKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items: [{ plan: pack.planId, quantity: 1 }],
-        metadata: { order_id: orderId, email: u.email, pack: packId },
-        success_url: (process.env.PUBLIC_BASE || 'https://ai-tutor-jqnp.onrender.com') + '/pricing.html?paid=' + orderId,
-      })
-    });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.client_secret) {
-      db.orders = db.orders.filter(o => o.id !== orderId); saveDB();
-      return res.status(502).json({ error: 'whop_create_failed', detail: j });
-    }
-    // 直接跳 Whop 原生支付页
-    const checkoutUrl = 'https://whop.com/checkout?client_secret=' + encodeURIComponent(j.client_secret);
-    res.json({ ok: true, orderId, checkoutUrl });
-  } catch (e) {
-    db.orders = db.orders.filter(o => o.id !== orderId); saveDB();
-    res.status(502).json({ error: 'whop_error', detail: String(e) });
-  }
+  // 直接跳 Whop 托管的支付页（purchase_url），metadata 随 URL 传递，webhook 回调时带回
+  const checkoutUrl = 'https://whop.com/checkout/' + pack.planId
+    + '?metadata[order_id]=' + encodeURIComponent(orderId)
+    + '&metadata[email]=' + encodeURIComponent(u.email)
+    + '&metadata[pack]=' + encodeURIComponent(packId);
+  res.json({ ok: true, orderId, checkoutUrl });
 });
 
 // ---- 发起 NOWPayments 加密支付 ----
