@@ -109,7 +109,8 @@ function saveData(data) { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null,
 
 // ============ 账号/订阅/兑换码 数据库（Neon Postgres 持久化） ============
 const { Pool } = require('pg');
-const pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const DATABASE_URL = process.env.DATABASE_URL || 'postgres://neondb_owner:npg_0lusQFvZjEi2@ep-wild-tree-b58hah0w-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+const pgPool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
 async function pgLoad() {
   try {
     await pgPool.query(`CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value JSONB)`);
