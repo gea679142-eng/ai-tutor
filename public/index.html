@@ -197,7 +197,7 @@ Auth.guard().then(function (u) {
   setUiLang(nativeLang);
   document.getElementById('subState').textContent = Auth.planText(u.subscription);
   paintProgress(u.progress); paintTeacher(); buildNativeSelect(); paintTargetSeg();
-  if (!u.subscription.active) setTimeout(function () { location.href = '/pricing.html'; }, 500);
+  if ((u.credits || 0) < 0.25) setTimeout(function () { location.href = '/pricing.html'; }, 500);
 }).catch(function () {});
 </script>
 </body>

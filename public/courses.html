@@ -140,7 +140,7 @@ function paintProgress(p){
 function go(id){ location.href='/course.html?course='+id; }
 var savedProgress=null;
 Auth.guard().then(function(u){
-  if(!u.subscription.active){ location.href='/pricing.html'; return; }
+  if((u.credits||0) < 0.25){ location.href='/pricing.html'; return; }
   nativeLang=localStorage.getItem('nativeLang')||u.nativeLang||'en';
   if(nativeLang) setUiLang(nativeLang,false);
   applyI18n();
