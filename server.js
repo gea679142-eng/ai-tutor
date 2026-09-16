@@ -803,9 +803,11 @@ app.post('/api/pay/test/complete', orderLimiter, (req, res) => {
   // 测试卡号：4242424242424242（Whop/Stripe 通用成功测试卡）
   if (card !== '4242424242424242') return res.status(400).json({ error: 'card_declined', message: 'Card declined. Use test card 4242 4242 4242 4242.' });
   // 走和 Whop webhook 完全一样的加积分逻辑（幂等）
+  const beforeCredits = (db.users[u.email] && db.users[u.email].credits) || 0;
   fulfillOrder(u.email, order.pack, orderId, { channel: 'test', amount: order.amount, currency: 'USD', test: true });
   const nu = db.users[u.email];
-  res.json({ ok: true, credits: nu.credits, added: CREDIT_PACKS[order.pack].credits, message: 'Payment successful! Credits added.' });
+  const addedCredits = Math.round(((nu.credits || 0) - beforeCredits) * 100) / 100;
+  res.json({ ok: true, credits: nu.credits, added: addedCredits, message: addedCredits > 0 ? 'Payment successful! Credits added.' : 'Order already processed (idempotent).' });
 });
 app.get('/health', (req, res) => res.status(200).json({ ok: true, ts: Date.now(), uptime: process.uptime() }));
 
