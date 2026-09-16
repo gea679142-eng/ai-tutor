@@ -61,8 +61,9 @@ th{color:#7c909a;font-weight:700}
       <div class="card">
         <div class="row">
           <select id="codeType">
-            <option value="week">周卡（7天）</option>
-            <option value="month">月卡（30天）</option>
+            <option value="pack50">Starter $9.9 (500积分)</option>
+            <option value="pack120" selected>Pro $19.9 (1600积分)</option>
+            <option value="pack400">VIP $39.9 (4000积分)</option>
           </select>
           <input type="number" id="codeCount" value="20" min="1" max="500" style="width:110px">
           <button class="primary" onclick="genCodes()">批量生成</button>
@@ -135,7 +136,7 @@ async function loadCodes(){
   var tb=document.getElementById('codesBody'); tb.innerHTML='';
   (r.codes||[]).slice(0,200).forEach(function(c){
     var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+esc(c.code)+'</td><td>'+(c.type==='week'?'周卡':'月卡')+'</td>'+
+    tr.innerHTML='<td>'+esc(c.code)+'</td><td>'+({pack50:'Starter',pack120:'Pro',pack400:'VIP',week:'周卡',month:'月卡'}[c.type]||c.type)+'</td>'+
       '<td class="'+(c.used?'tag-used':'tag-new')+'">'+(c.used?'已使用':'未使用')+'</td>'+
       '<td>'+esc(c.usedBy||'-')+'</td><td class="muted">'+fmt(c.createdAt)+'</td><td class="muted">'+fmt(c.usedAt)+'</td>';
     tb.appendChild(tr);

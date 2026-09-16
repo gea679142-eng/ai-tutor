@@ -825,9 +825,9 @@ app.post('/api/dev/simulate-paid', (req, res) => {
 // ============ API: 管理后台（ADMIN_KEY 保护） ============
 function adminOk(req) { return String(req.headers['x-admin-key'] || req.body.adminKey || req.query.adminKey || '') === ADMIN_KEY; }
 function genCodeStr(type) {
-  const p = type === 'week' ? 'WEEK' : 'MONTH';
+  const prefix = { pack50: 'STARTER', pack120: 'PRO', pack400: 'VIP', week: 'WEEK', month: 'MONTH' }[type] || 'CODE';
   const seg = () => crypto.randomBytes(2).toString('hex').toUpperCase();
-  return `${p}-${seg()}-${seg()}`;
+  return `${prefix}-${seg()}-${seg()}`;
 }
 app.post('/api/admin/codes/generate', (req, res) => {
   if (!adminOk(req)) return res.status(403).json({ error: '管理密钥错误' });
