@@ -1,0 +1,17 @@
+{
+  "name": "ai-language-tutor",
+  "version": "1.0.0",
+  "description": "AI Language Tutor - 恋爱式AI语言对话学习",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "edge-tts": "^1.0.1",
+    "express": "^4.21.0",
+    "ws": "^8.21.3"
+  }
+}

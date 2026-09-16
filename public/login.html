@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12b3a3">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/images/xiaomei.jpg">
+<title>Sign in · AI Language Partner</title>
+<link rel="stylesheet" href="/theme.css">
+<style>
+  body{display:flex;flex-direction:column;min-height:100vh}
+  .lang-top{display:flex;justify-content:flex-end;padding:calc(12px + env(safe-area-inset-top)) 14px 0}
+  .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:18px 16px}
+  .auth-card{width:100%;max-width:420px}
+  .logo{width:84px;height:84px;margin:0 auto 10px;border-radius:26px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:var(--shadow-lg)}
+  .seg.tabs{display:flex;background:#eef3f5;border-radius:999px;padding:5px;gap:5px;margin:18px 0}
+  .seg.tabs button{flex:1;min-height:46px;border-radius:999px;font-weight:800;font-size:15px;color:var(--ink-2);background:transparent}
+  .seg.tabs button.on{background:#fff;color:var(--brand-d);box-shadow:var(--shadow-sm)}
+  .msg{font-size:13.5px;text-align:center;margin-top:12px;min-height:18px;color:var(--bad);font-weight:700}
+  .tip{text-align:center;font-size:12.5px;color:var(--ink-3);margin-top:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="lang-top"><select id="uiLang" class="input" style="min-height:42px;width:170px"></select></div>
+<div class="auth-wrap">
+  <div class="card auth-wrap-card" style="padding:26px 22px">
+    <div class="logo" data-fx>🗣️</div>
+    <h1 class="text-center brand-grad-text" style="font-size:24px" data-i18n="app_name">AI Language Partner</h1>
+    <p class="text-center muted small" data-i18n="tagline">Practice speaking with a lifelike AI</p>
+    <div class="seg tabs" data-fx>
+      <button type="button" class="on" id="tabLogin" onclick="switchTab('login')" data-i18n="login">Log in</button>
+      <button type="button" id="tabReg" onclick="switchTab('reg')" data-i18n="register">Sign up</button>
+    </div>
+    <div class="field" data-fx>
+      <label data-i18n="email">Email</label>
+      <input id="email" class="input" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email">
+    </div>
+    <div class="field" data-fx>
+      <label data-i18n="password">Password</label>
+      <input id="password" class="input" type="password" data-i18n-ph="pw_ph" autocomplete="current-password">
+    </div>
+    <button class="btn" id="submitBtn" onclick="submit()" data-fx data-i18n="login_btn">Log in</button>
+    <div class="msg" id="msg"></div>
+    <div class="tip" data-i18n="login_tip">Weekly / monthly subscription or redeem a code to unlock</div>
+    <div class="contact-bar" style="padding-bottom:0">
+      <a href="mailto:gea679142@gmail.com">✉️ gea679142@gmail.com</a>
+      <a class="wa" href="https://wa.me/14013090888" target="_blank" rel="noopener">💬 WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<script src="/vendor/gsap.min.js"></script>
+<script src="/auth.js"></script>
+<script src="/i18n.js"></script>
+<script src="/app-fx.js"></script>
+<script>
+function leaveLoginIfAuthed(){ if (Auth.getToken()) location.replace('/'); }
+leaveLoginIfAuthed();
+window.addEventListener('pageshow', leaveLoginIfAuthed);
+var mode='login';
+function refreshStatic(){
+  applyI18n();
+  document.getElementById('submitBtn').textContent=t(mode==='login'?'login_btn':'reg_btn');
+}
+buildLangSelect(document.getElementById('uiLang'), getUiLang(), function(l){ setUiLang(l,true); });
+function switchTab(m){
+  mode=m;
+  document.getElementById('tabLogin').classList.toggle('on',m==='login');
+  document.getElementById('tabReg').classList.toggle('on',m==='reg');
+  document.getElementById('submitBtn').textContent=t(m==='login'?'login_btn':'reg_btn');
+  document.getElementById('msg').textContent='';
+}
+function showMsg(txt){ var el=document.getElementById('msg'); el.textContent=txt; }
+async function submit(){
+  var email=document.getElementById('email').value.trim();
+  var password=document.getElementById('password').value;
+  if(!email||!password) return showMsg(t('err_required'));
+  if(mode==='reg'&&password.length<6) return showMsg(t('err_password_short'));
+  var btn=document.getElementById('submitBtn'); btn.disabled=true; showMsg('');
+  var endpoint=mode==='login'?'/api/auth/login':'/api/auth/register';
+  var payload={email:email,password:password};
+  if(mode==='reg') payload.nativeLang=getUiLang();
+  var r=await Auth.post(endpoint,payload);
+  btn.disabled=false;
+  if(!r.ok) return showMsg(errText(r.data.error));
+  Auth.setToken(r.data.token);
+  var u=r.data.user||{};
+  if(u.nativeLang) setUiLang(u.nativeLang);
+  localStorage.setItem('nativeLang', u.nativeLang||getUiLang());
+  localStorage.setItem('targetLang', u.targetLang||'zh');
+  localStorage.setItem('character', u.character||'female');
+  localStorage.setItem('teacherId', u.teacherId||(u.character==='male'?'m_real':'f_real'));
+  // 新注册先选老师，老用户直接进首页
+  location.replace(mode==='reg'?'/teacher.html?new=1':'/');
+}
+document.getElementById('password').addEventListener('keydown',function(e){ if(e.key==='Enter') submit(); });
+refreshStatic();
+</script>
+</body>
+</html>

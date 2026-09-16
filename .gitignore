@@ -1,0 +1,10 @@
+﻿node_modules/
+.env
+db.json
+translate-cache.json
+*.log
+*.out
+*.mp3
+*.wav
+voice-samples/
+.DS_Store

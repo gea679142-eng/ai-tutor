@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12b3a3">
+<link rel="manifest" href="/manifest.json">
+<title>Buy Credits · AI Language Partner</title>
+<link rel="stylesheet" href="/theme.css">
+<style>
+  .bal{background:var(--grad);color:#fff;border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);margin:16px 0}
+  .bal .lab{font-size:12px;opacity:.9}
+  .bal .big{font-size:28px;font-weight:900;margin:4px 0}
+  .bal .min{font-size:13px;opacity:.92}
+  h2{font-size:17px;margin:14px 0 10px}
+  .packs{display:flex;flex-direction:column;gap:14px;margin:6px 0 16px}
+  .pack{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:.16s;box-shadow:var(--shadow-sm)}
+  .pack.selected{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-l),var(--shadow)}
+  .pack .ic{font-size:30px}
+  .pack .info{flex:1}
+  .pack .nm{font-size:15px;font-weight:800}
+  .pack .sub{font-size:12px;color:var(--ink-3);margin-top:2px}
+  .pack .pr{font-size:22px;font-weight:900;color:var(--ink)}
+  .pack .save{font-size:11px;color:var(--ok);font-weight:700}
+  .pack .tag{position:absolute;top:-9px;right:12px;background:var(--grad-warm);color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:999px}
+  .pack{position:relative}
+  .cost-table{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:14px 0}
+  .cost-table h3{font-size:13px;margin:0 0 8px}
+  .cost-table table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .cost-table td{padding:6px 0;border-bottom:1px dashed var(--line)}
+  .cost-table td:last-child{text-align:right;font-weight:700}
+  .btn{width:100%;min-height:52px;font-size:16px;margin-top:6px}
+  .msg{font-size:13.5px;text-align:center;min-height:18px;margin-top:12px;font-weight:700}
+  .ok{color:var(--ok)}.err{color:var(--bad)}
+  .redeem-row{display:flex;gap:10px;margin-top:14px}
+  .redeem-row input{flex:1;min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line);font-size:15px;outline:none}
+  .redeem-row button{min-height:48px;padding:0 18px;border-radius:14px;background:linear-gradient(135deg,#7c5cff,#5b7bf0);color:#fff;font-weight:800}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="iconbtn home" onclick="location.href='/'">🏠 Home</button>
+  <div class="title">Buy Credits</div>
+  <button class="iconbtn" onclick="Auth.logout()">Log out</button>
+</div>
+
+<div class="wrap-narrow">
+  <div class="bal" data-fx>
+    <div class="lab">Your balance</div>
+    <div class="big" id="balBig">0 积分</div>
+    <div class="min" id="balMin">≈ 0 minutes of chat</div>
+  </div>
+
+  <h2>Choose a credit pack</h2>
+  <div class="packs" data-fx id="packs"></div>
+  <button class="btn warm" id="payBtn" onclick="pay()">Pay with Whop</button>
+  <button class="btn ghost" onclick="payCrypto()" style="margin-top:8px">Pay with Crypto</button>
+  <div class="msg" id="payMsg"></div>
+
+  <div class="cost-table" data-fx>
+    <h3>How credits are spent</h3>
+    <table>
+      <tr><td>1 chat turn (you + AI, ~15s)</td><td>0.25 credits</td></tr>
+      <tr><td>Pronunciation practice</td><td>0.25 credits</td></tr>
+      <tr><td>Quiz / flashcard question</td><td>0.05 credits</td></tr>
+      <tr><td>Replay AI voice</td><td>0.05 credits</td></tr>
+    </table>
+    <div style="font-size:11.5px;color:var(--ink-3);margin-top:8px">1 credit ≈ 1 minute of conversation. Credits never expire.</div>
+  </div>
+
+  <div style="text-align:center;color:var(--ink-3);font-size:12px;margin:18px 0 8px">— or redeem a code —</div>
+  <div class="redeem-row">
+    <input id="codeInput" placeholder="Enter code" maxlength="20">
+    <button onclick="redeem()">Redeem</button>
+  </div>
+  <div class="msg" id="redeemMsg"></div>
+
+  <div class="contact-bar">
+    <a href="mailto:gea679142@gmail.com">✉️ gea679142@gmail.com</a>
+    <a class="wa" href="https://wa.me/14013090888" target="_blank">💬 WhatsApp +1 401 309 0888</a>
+  </div>
+</div>
+
+<script src="/vendor/gsap.min.js"></script>
+<script src="/auth.js"></script>
+<script src="/app-fx.js"></script>
+<script>
+var me=null, selected='pack120', packs={};
+function paintBalance(){
+  var c=(me&&me.credits)||0;
+  document.getElementById('balBig').textContent=c+' 积分';
+  document.getElementById('balMin').textContent='≈ '+Math.round(c/4)+' minutes of chat';
+}
+function renderPacks(){
+  var el=document.getElementById('packs'); el.innerHTML='';
+  var order=['pack50','pack120','pack400'];
+  order.forEach(function(id){
+    var p=packs[id]; if(!p) return;
+    var d=document.createElement('div');
+    d.className='pack'+(selected===id?' selected':'');
+    var mins=Math.round(p.credits/4);
+    var minsLabel=mins>=60? (Math.floor(mins/60)+'h '+mins%60+'m') : mins+' min';
+    d.innerHTML='<div class="ic">'+(id==='pack50'?'🌱':id==='pack120'?'⭐':'👑')+'</div>'
+      +'<div class="info"><div class="nm">'+p.label.split(' · ')[0]+'</div>'
+      +'<div class="sub">'+p.credits+' credits · ≈ '+minsLabel+'</div></div>'
+      +'<div><div class="pr">$'+p.usd+'</div></div>';
+    if(id==='pack120'){ var t=document.createElement('div'); t.className='tag'; t.textContent='POPULAR'; d.appendChild(t); }
+    d.onclick=function(){selected=id;renderPacks();};
+    el.appendChild(d);
+  });
+}
+async function load(){
+  try{
+    var d=await Auth.me(); me=d.user;
+    var p=await Auth.get('/api/plans'); packs=p.data.packs;
+    paintBalance(); renderPacks();
+  }catch(e){ console.error(e); }
+}
+function pm(id,txt,cls){var el=document.getElementById(id);el.textContent=txt;el.className='msg '+(cls||'');}
+async function pay(){
+  var btn=document.getElementById('payBtn'); btn.disabled=true; btn.textContent='Processing...';
+  // 本地沙箱模拟支付（生产接 Whop checkout）
+  var s=await Auth.post('/api/order/mock-pay',{pack:selected});
+  btn.disabled=false; btn.textContent='Pay with Whop';
+  if(s.ok){ pm('payMsg','✓ Credits added! Redirecting...','ok'); me=s.data.user; paintBalance(); setTimeout(function(){location.href='/chat.html';},1200); }
+  else pm('payMsg','Payment failed: '+(s.data&&s.data.error),'err');
+}
+async function payCrypto(){
+  var btn=document.getElementById('payCryptoBtn'); btn.disabled=true;
+  var s=await Auth.post('/api/order/mock-pay',{pack:selected});
+  btn.disabled=false;
+  if(s.ok){ pm('payMsg','✓ Credits added! Redirecting...','ok'); me=s.data.user; paintBalance(); setTimeout(function(){location.href='/chat.html';},1200); }
+  else pm('payMsg','Crypto payment not configured yet','err');
+}
+async function redeem(){
+  var code=document.getElementById('codeInput').value.trim();
+  if(!code) return;
+  var r=await Auth.post('/api/redeem',{code:code});
+  if(r.ok){ pm('redeemMsg','✓ +'+r.data.credits+' credits added!','ok'); document.getElementById('codeInput').value=''; me=r.data.user; paintBalance(); setTimeout(function(){location.href='/chat.html';},1200); }
+  else document.getElementById('redeemMsg').textContent='Code invalid or used';
+}
+document.getElementById('codeInput').addEventListener('keydown',function(e){if(e.key==='Enter')redeem();});
+load();
+</script>
+</body>
+</html>

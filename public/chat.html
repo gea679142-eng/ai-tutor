@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12b3a3">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/images/xiaomei.jpg">
+<title>AI chat</title>
+<link rel="stylesheet" href="/theme.css">
+<style>
+  html,body{height:100%;max-width:100%;overflow-x:hidden}
+  body{display:flex;flex-direction:column;overflow:hidden;width:100%}
+  .chat-top{display:flex;align-items:center;gap:9px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;min-width:0;width:100%;box-sizing:border-box;flex:0 0 auto}
+  .chat-top .avatar{width:42px;height:42px}
+  .chat-top .who{flex:1;min-width:0}
+  .chat-top .nm{font-weight:800;font-size:15px;line-height:1.2}
+  .chat-top .st{font-size:12px;color:var(--ink-3);line-height:1.2}
+  .chat-top .iconbtn{min-width:38px;padding:0 9px;font-size:13px}
+  .mode-badge{font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;color:#fff;white-space:nowrap}
+  .mode-badge.course{background:var(--grad)} .mode-badge.chat{background:var(--grad-warm)} .mode-badge.treehole{background:linear-gradient(135deg,#5b7bf0,#8a63e8)}
+  .scene-bar{display:flex;flex:0 0 auto;gap:8px;overflow-x:auto;overflow-y:hidden;width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:8px 12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.7);scrollbar-width:none}
+  .scene-bar::-webkit-scrollbar{display:none}
+  .scene-chip{flex:none;min-height:38px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:13.5px;font-weight:700;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+  .scene-chip.on{background:var(--grad);color:#fff;border-color:transparent;box-shadow:var(--shadow-sm)}
+  .course-strip{display:none;padding:9px 14px;background:var(--brand-l);font-size:13px;border-bottom:1px solid var(--line)}
+  .chat-box{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:11px;-webkit-overflow-scrolling:touch}
+  .msg-row{display:flex;max-width:86%}
+  .msg-row.ai{align-self:flex-start} .msg-row.me{align-self:flex-end}
+  .bubble{font-size:17px;line-height:1.5}
+  .bubble.ai{font-weight:600}
+  /* 双语层次：主句=正在学/说的目标语（大字加粗）；.sub=对照译文（虚线分隔、小字弱化） */
+  .bubble .sub{display:block;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:14.5px;line-height:1.5;font-weight:500;opacity:.95}
+  .bubble.ai .sub{color:var(--ink-3);font-weight:500}
+  .bubble.me .sub{color:rgba(255,255,255,.94);border-top-color:rgba(255,255,255,.34)}
+  .bubble .tp{margin-top:8px}
+  .replay-btn{margin-top:7px;font-size:12px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--brand-d);border-radius:999px;padding:4px 11px;min-height:30px}
+  .replay-btn:disabled{opacity:.6}
+  .typing-dots{display:inline-flex;gap:4px;align-items:center}
+  .typing-dots i{width:7px;height:7px;border-radius:50%;background:var(--ink-3);animation:blink 1.2s infinite}
+  .typing-dots i:nth-child(2){animation-delay:.2s}.typing-dots i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+  .dock{display:flex;align-items:center;gap:8px;width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+  #normalDock{padding:8px 10px calc(10px + env(safe-area-inset-bottom));flex:0 0 auto}
+  .dock input{flex:1;min-height:46px;border-radius:999px;border:1.5px solid var(--line);padding:0 16px;background:#fff;outline:none;font-size:16px}
+  .dock input:focus{border-color:var(--brand)}
+  .rnd{width:46px;height:46px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:19px;color:#fff;box-shadow:var(--shadow-sm)}
+  .rnd.mic{background:#3a4a55} .rnd.send{background:var(--grad)} .rnd.call{background:#fff;color:var(--brand-d);border:1.5px solid var(--brand);box-shadow:none}
+  .rnd.mic.rec{background:var(--bad);animation:pulseRec 1s infinite}
+  @keyframes pulseRec{0%,100%{box-shadow:0 0 0 0 rgba(255,90,95,.5)}50%{box-shadow:0 0 0 10px rgba(255,90,95,0)}}
+  #callBar{display:none;flex-direction:column;align-items:center;gap:8px;padding:10px 12px calc(12px + env(safe-area-inset-bottom))}
+  #callBar.on{display:flex}
+  #callBar .hint{font-size:13.5px;color:var(--ink-2);font-weight:700}
+  .hangup{width:64px;height:64px;border-radius:50%;background:var(--bad);color:#fff;font-size:26px;box-shadow:0 10px 26px rgba(255,90,95,.4)}
+  .call-ava{width:64px;height:64px}
+  @media (max-width:640px){
+    .msg-row{max-width:91%} .bubble{font-size:16.5px} .bubble .sub{font-size:14px}
+    .chat-top .iconbtn{padding:0 8px}
+  }
+</style>
+</head>
+<body>
+<div id="audioHint" onclick="unlockAudio()" style="display:none;position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:60;background:linear-gradient(135deg,#12b3a3,#0e8f82);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 8px 22px rgba(14,143,130,.42);cursor:pointer;max-width:90vw;text-align:center;">🔊 <span data-i18n="tap_enable_audio">Tap anywhere to turn on voice</span></div>
+<div class="topbar chat-top">
+  <button class="iconbtn home" onclick="location.href='/'" title="Home">🏠</button>
+  <div class="avatar ring" style="position:relative"><img id="avatar" src="/images/xiaomei.jpg" alt=""></div>
+  <div class="who">
+    <div class="nm" id="partnerName">Mei</div>
+    <div class="st" id="statusText">online</div>
+  </div>
+  <span class="mode-badge chat" id="modeBadge"></span>
+  <button class="iconbtn" onclick="clearChat()" data-i18n="clear_chat">Clear</button>
+  <button class="iconbtn" onclick="Auth.logout()" data-i18n="logout">Log out</button>
+</div>
+
+<div class="scene-bar" id="sceneBar">
+  <button class="scene-chip" data-go="chat">💬 <span data-i18n="free_chat">Free chat</span></button>
+  <button class="scene-chip" data-go="treehole">🌙 <span data-i18n="treehole_entry">Tree-hole</span></button>
+  <button class="scene-chip" onclick="document.getElementById('coursePick').classList.toggle('hide')">📚 <span data-i18n="scenario_chat">Scenario</span> ▾</button>
+  <select id="coursePick" class="hide" style="min-height:38px;border-radius:12px;border:1.5px solid var(--line);padding:0 10px;max-width:60vw" onchange="pickCourse(this)"></select>
+</div>
+
+<div class="course-strip" id="courseInfo"></div>
+
+<div class="chat-box" id="chatBox"></div>
+
+<!-- 通话中 -->
+<div class="dock" id="callBar">
+  <div class="avatar ring call-ava" style="position:relative"><img id="callImg" src="/images/xiaomei.jpg" alt=""><span class="pulse-dot"></span></div>
+  <div class="hint" id="callHint" data-i18n="call_hint">On a call — speak freely</div>
+  <button class="hangup" onclick="exitCall()" data-i18n-title="end_call">📵</button>
+</div>
+
+<!-- 常规输入 -->
+<div class="dock" id="normalDock">
+  <button class="rnd call" onclick="enterCall()" title="Call">📞</button>
+  <button class="rnd mic" id="micBtn" onclick="micOnce()">🎤</button>
+  <input id="msgInput" data-i18n-ph="input_ph" placeholder="" onkeydown="if(event.key==='Enter')send()">
+  <button class="rnd send" onclick="send()">➤</button>
+</div>
+
+<script src="/vendor/gsap.min.js"></script>
+<script src="/i18n.js"></script>
+<script src="/teachers.js"></script>
+<script src="/auth.js"></script>
+<script src="/app-fx.js"></script>
+<script>
+var params = new URLSearchParams(location.search);
+var mode = params.get('mode') === 'course' ? 'course' : (params.get('mode') === 'treehole' ? 'treehole' : 'chat');
+var catId = params.get('cat'), courseId = params.get('course');
+var character = localStorage.getItem('character') || 'female';
+var teacherId = localStorage.getItem('teacherId') || (character === 'male' ? 'm_real' : 'f_real');
+var nativeLang = localStorage.getItem('nativeLang') || 'en';
+var targetLang = localStorage.getItem('targetLang') || 'zh';
+var courseData = null, sending = false;
+var currentAudio = null;
+var aiSpeakLang = targetLang;          // AI 实际说话语言（课程模式由后端锁定为中文）
+var audioUnlocked = false, pendingSpeak = null; // 浏览器自动播放策略：首次手势解锁
+
+Auth.guard().then(function (u) {
+  character = u.character || character;
+  teacherId = u.teacherId || teacherId;
+  nativeLang = u.nativeLang || nativeLang;
+  targetLang = u.targetLang || targetLang;
+  aiSpeakLang = mode === 'course' ? 'zh' : targetLang;
+  var prefs = { character: character, teacherId: teacherId, nativeLang: nativeLang, targetLang: targetLang };
+  Object.keys(prefs).forEach(function (k) { localStorage.setItem(k, prefs[k]); });
+  setUiLang(nativeLang, false); applyI18n();
+  document.getElementById('avatar').src = teacherImg(teacherId);
+  document.getElementById('callImg').src = teacherImg(teacherId);
+  document.getElementById('partnerName').textContent = character === 'male' ? t('teacher_male') : t('teacher_female');
+  paintSceneChips();
+  loadCoursePicker();
+  if (mode === 'course' && catId && courseId) loadCourseThenOpen();
+  else openConversation();
+}).catch(function () {});
+
+function setStatus(s) { document.getElementById('statusText').textContent = s; }
+function paintSceneChips() {
+  document.querySelectorAll('.scene-chip[data-go]').forEach(function (b) {
+    b.classList.toggle('on', b.getAttribute('data-go') === mode);
+    b.onclick = function () { location.href = '/chat.html?mode=' + b.getAttribute('data-go'); };
+  });
+  var badge = document.getElementById('modeBadge');
+  badge.className = 'mode-badge ' + mode;
+  badge.textContent = mode === 'course' ? t('mode_course') : (mode === 'treehole' ? t('treehole_entry') : t('free_chat'));
+}
+
+// ---------- 消息渲染 ----------
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function addMsg(text, who, trans, teaching, lang) {
+  var row = document.createElement('div');
+  row.className = 'msg-row ' + (who === 'user' ? 'me' : 'ai');
+  var b = document.createElement('div');
+  b.className = 'bubble ' + (who === 'user' ? 'me' : 'ai');
+  b.innerHTML = esc(text);
+  if (trans && String(trans).trim() && String(trans).trim() !== String(text).trim()) { var s = document.createElement('span'); s.className = 'sub'; s.textContent = trans; b.appendChild(s); }
+  if (teaching) { var tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = '🔖 ' + teaching; b.appendChild(tp); }
+  if (who === 'ai') {
+    var msgLang = lang || aiSpeakLang || targetLang;
+    var rb = document.createElement('button');
+    rb.className = 'replay-btn'; rb.textContent = t('replay');
+    rb.onclick = function () { replay(rb, text, msgLang); };
+    b.appendChild(rb);
+  }
+  row.appendChild(b);
+  document.getElementById('chatBox').appendChild(row);
+  if (window.FX) FX.pop(b);
+  scrollBottom();
+  return b;
+}
+function addSub(bubbleEl, trans) {
+  if (!trans || !String(trans).trim()) return;
+  var main = (bubbleEl.firstChild && bubbleEl.firstChild.nodeValue) ? bubbleEl.firstChild.nodeValue.trim() : '';
+  if (main && main === String(trans).trim()) return; // 同语言译文与原文一致时不重复显示
+  var s = document.createElement('span'); s.className = 'sub'; s.textContent = trans;
+  bubbleEl.insertBefore(s, bubbleEl.querySelector('.tp'));
+  scrollBottom();
+}
+function scrollBottom() { var box = document.getElementById('chatBox'); box.scrollTop = box.scrollHeight; }
+function typingBubble() {
+  var row = document.createElement('div'); row.className = 'msg-row ai';
+  var b = document.createElement('div'); b.className = 'bubble ai'; b.id = 'typingBubble';
+  b.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
+  row.appendChild(b); document.getElementById('chatBox').appendChild(row); scrollBottom();
+  return row;
+}
+
+// ---------- TTS（返回播放结束 Promise，重听/通话共用） ----------
+function showAudioHint(show) {
+  var h = document.getElementById('audioHint');
+  if (h) h.style.display = show ? 'flex' : 'none';
+}
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  showAudioHint(false);
+  // 解锁一个静音 AudioContext，同时唤醒音频通道
+  try { var ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); setTimeout(function(){ try{ac.close();}catch(e){} }, 300); } catch (e) {}
+  if (pendingSpeak) { var p = pendingSpeak; pendingSpeak = null; speak(p.text, p.lang); }
+}
+['pointerdown', 'touchstart', 'keydown', 'click'].forEach(function (ev) {
+  document.addEventListener(ev, unlockAudio, { passive: true });
+});
+function speak(text, lang) {
+  return new Promise(function (resolve) {
+    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+    if (!text) return resolve();
+    lang = lang || aiSpeakLang || targetLang;
+    // 尚未获得用户手势：浏览器会拦截自动播放，先挂起，首次点击/按键时补播开场
+    if (!audioUnlocked) {
+      pendingSpeak = { text: text, lang: lang };
+      showAudioHint(true);
+      return resolve();
+    }
+    var audio = new Audio(Auth.ttsUrl(text, character, lang));
+    currentAudio = audio;
+    var done = false;
+    function fin() { if (done) return; done = true; resolve(); }
+    audio.onended = fin; audio.onerror = fin;
+    audio.play().catch(function () {
+      // 个别 WebView 即使有手势也可能拦截：回退为挂起，等下一次手势
+      pendingSpeak = { text: text, lang: lang }; showAudioHint(true); fin();
+    });
+    setTimeout(fin, 15000);
+  });
+}
+function replay(btn, text, lang) {
+  var old = btn.textContent; btn.disabled = true; btn.textContent = '🔊…';
+  unlockAudio();
+  speak(text, lang).then(function () { btn.disabled = false; btn.textContent = old; });
+}
+
+// ---------- 历史 / 开场 ----------
+function restoreHistory(m, cid) {
+  var url = '/api/history?mode=' + m + (cid ? '&course=' + encodeURIComponent(cid) : '');
+  return Auth.get(url).then(function (d) {
+    var list = (d && d.history) || [];
+    if (!list.length) return false;
+    list.forEach(function (x) { addMsg(x.text, x.role === 'user' ? 'user' : 'ai', x.trans || '', x.teaching || '', x.speakLang || (x.role === 'ai' ? aiSpeakLang : undefined)); });
+    scrollBottom(); return true;
+  }).catch(function () { return false; });
+}
+function openConversation() {
+  var cid = (mode === 'course' && courseData) ? courseData.course.id : (mode === 'course' ? courseId : null);
+  restoreHistory(mode, cid).then(function (has) {
+    if (has) return;
+    setStatus(t('typing'));
+    var tb = typingBubble();
+    Auth.post('/api/chat/opener', { mode: mode, courseInfo: courseData, nativeLang: nativeLang, targetLang: targetLang, character: character, teacherId: teacherId })
+      .then(function (r) { tb.remove(); setStatus(t('online')); if (r.ok && r.data.reply) { if (r.data.speakLang) aiSpeakLang = r.data.speakLang; addMsg(r.data.reply, 'ai', r.data.translation || '', r.data.teaching_point || '', r.data.speakLang || aiSpeakLang); speak(r.data.reply, r.data.speakLang || aiSpeakLang).then(function () { resetIdle(); }); } else { resetIdle(); } })
+      .catch(function () { tb.remove(); setStatus(t('online')); resetIdle(); });
+  });
+}
+function failToFreeChat(){
+  mode='chat'; courseData=null;
+  document.getElementById('courseInfo').style.display='none';
+  paintSceneChips();
+  openConversation();
+}
+function loadCourseThenOpen() {
+  fetch('/api/course/' + catId + '/' + courseId).then(function (r) {
+    if (!r.ok) throw new Error('no course');
+    return r.json();
+  }).then(function (data) {
+    if (!data || !data.course) { failToFreeChat(); return; }
+    courseData = data;
+    var ci = document.getElementById('courseInfo');
+    ci.style.display = 'block';
+    ci.innerHTML = '📚 <b>' + esc(data.category + ' · ' + data.course.name) + '</b> · ' + esc(data.course.scene);
+    openConversation();
+  }).catch(function () { failToFreeChat(); });
+}
+function loadCoursePicker() {
+  fetch('/api/categories').then(function (r) { return r.json(); }).then(async function (d) {
+    var sel = document.getElementById('coursePick');
+    sel.innerHTML = '';
+    var ph = document.createElement('option'); ph.value = ''; ph.textContent = '— ' + t('scenario_chat') + ' —'; sel.appendChild(ph);
+    var cats = d.categories || [];
+    // 收集中文分类名/课程名，按母语运行时翻译
+    var zhTexts = [];
+    cats.forEach(function (cat) { zhTexts.push(cat.name); (cat.courses || []).forEach(function (c) { zhTexts.push(c.name); }); });
+    var map = {};
+    if (nativeLang && nativeLang !== 'zh' && typeof rtFetch === 'function' && zhTexts.length) {
+      try { map = await rtFetch(nativeLang, zhTexts, 'zh') || {}; } catch (e) { map = {}; }
+    }
+    var tr = function (zh) { return (nativeLang === 'zh' || !map[zh]) ? zh : map[zh]; };
+    cats.forEach(function (cat) {
+      var og = document.createElement('optgroup'); og.label = cat.icon + ' ' + tr(cat.name);
+      (cat.courses || []).forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = cat.id + '|' + c.id; o.textContent = tr(c.name);
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+  }).catch(function () {});
+}
+function pickCourse(sel) {
+  if (!sel.value) return;
+  var parts = sel.value.split('|');
+  location.href = '/chat.html?mode=course&cat=' + parts[0] + '&course=' + parts[1];
+}
+function clearChat() {
+  if (!confirm(t('clear_confirm'))) return;
+  var cid = (mode === 'course' && courseData && courseData.course) ? courseData.course.id : (mode === 'course' ? courseId : null);
+  Auth.post('/api/history/clear', { mode: mode, course: cid });
+  document.getElementById('chatBox').innerHTML = '';
+  openConversation();
+}
+
+// ---------- 发送 ----------
+function requestReply(text, opts) {
+  opts = opts || {};
+  sending = true;
+  clearIdle(); idleNudges = 0;
+  var userBubble = addMsg(text, 'user');
+  setStatus(t('typing'));
+  var tb = typingBubble();
+  return Auth.post('/api/chat', { message: text, mode: mode, courseInfo: courseData, nativeLang: nativeLang, targetLang: targetLang, character: character, teacherId: teacherId })
+    .then(function (r) {
+      tb.remove();
+      if (r.status === 402) { alert(t('sub_expired_alert')); location.href = '/pricing.html'; throw new Error('expired'); }
+      if (!r.ok) throw new Error('fail');
+      var data = r.data;
+      if (data.user_translation) addSub(userBubble, data.user_translation);
+      if (data.speakLang) aiSpeakLang = data.speakLang;
+      if (data.reply) { addMsg(data.reply, 'ai', data.translation || '', data.teaching_point || '', data.speakLang || aiSpeakLang); return speak(data.reply, data.speakLang || aiSpeakLang); }
+    }).catch(function () {}).then(function () { sending = false; setStatus(t('online')); resetIdle(); });
+}
+function send() {
+  if (sending || inCall) return;
+  var input = document.getElementById('msgInput');
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  requestReply(text);
+}
+
+// ---------- 冷场主动搭话（自由聊天/树洞，课程模式不打断） ----------
+var idleTimer = null, idleNudges = 0;
+var IDLE_MS = 35000; // 学生沉默较久（约35秒）才轻轻主动一次，不打扰、不连环催
+function clearIdle() { if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; } }
+function resetIdle() {
+  clearIdle();
+  // 按最新要求：AI 只在学生发言后回复一次，冷场也不主动连发，把对话节奏完全交给学生
+}
+function maybeNudge() {
+  if (sending || inCall || mode === 'course' || idleNudges >= 1) return;
+  if (document.hidden) { resetIdle(); return; }
+  idleNudges++;
+  setStatus(t('typing'));
+  var tb = typingBubble();
+  Auth.post('/api/chat/nudge', { mode: mode, courseInfo: null, nativeLang: nativeLang, targetLang: targetLang, character: character, teacherId: teacherId })
+    .then(function (r) {
+      tb.remove(); setStatus(t('online'));
+      if (r.ok && r.data && r.data.reply) {
+        if (r.data.speakLang) aiSpeakLang = r.data.speakLang;
+        addMsg(r.data.reply, 'ai', r.data.translation || '', r.data.teaching_point || '', r.data.speakLang || aiSpeakLang);
+        speak(r.data.reply, r.data.speakLang || aiSpeakLang).then(function () { resetIdle(); });
+      } else { resetIdle(); }
+    }).catch(function () { tb.remove(); setStatus(t('online')); resetIdle(); });
+}
+document.addEventListener('visibilitychange', function () { if (!document.hidden) resetIdle(); else clearIdle(); });
+
+// ---------- 录音（VAD 静音自动断句） ----------
+var audioStream = null, audioCtx = null;
+function stopStream() {
+  if (audioStream) { audioStream.getTracks().forEach(function (t) { t.stop(); }); audioStream = null; }
+  if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
+}
+function pickMime() {
+  var c = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/webm'];
+  for (var i = 0; i < c.length; i++) { if (window.MediaRecorder && MediaRecorder.isTypeSupported(c[i])) return c[i]; }
+  return '';
+}
+function micError(err) {
+  var msg = t('allow_mic');
+  if (err && (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError')) msg = 'No microphone found.';
+  alert(msg + '\n(' + (err && err.name ? err.name : 'error') + ')');
+}
+function recordUtterance(opts) {
+  opts = opts || {};
+  return new Promise(function (resolve, reject) {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      audioStream = stream;
+      var mime = pickMime();
+      var mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      var chunks = [];
+      mr.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      var ctx = new (window.AudioContext || window.webkitAudioContext)(); audioCtx = ctx;
+      var an = ctx.createAnalyser(); an.fftSize = 512;
+      ctx.createMediaStreamSource(stream).connect(an);
+      var buf = new Uint8Array(an.fftSize), started = false, silenceStart = 0, t0 = Date.now(), maxMs = opts.maxMs || 9000;
+      mr.start();
+      var timer = setInterval(function () {
+        an.getByteTimeDomainData(buf);
+        var sum = 0; for (var i = 0; i < buf.length; i++) { var v = (buf[i] - 128) / 128; sum += v * v; }
+        var rms = Math.sqrt(sum / buf.length);
+        var el = Date.now() - t0;
+        if (rms > 0.02) { started = true; silenceStart = Date.now(); }
+        else if (started && !silenceStart) { silenceStart = Date.now(); }
+        var silentFor = started && silenceStart ? Date.now() - silenceStart : 0;
+        if ((started && silentFor > 1100) || el > maxMs) { clearInterval(timer); if (mr.state !== 'inactive') { try { mr.stop(); } catch (e) {} } }
+      }, 120);
+      mr.onstop = function () {
+        clearInterval(timer);
+        var blob = new Blob(chunks, { type: (mr.mimeType || mime || 'audio/webm') });
+        stopStream();
+        resolve({ blob: blob, mime: (mr.mimeType || mime || 'audio/webm'), heard: started });
+      };
+    }).catch(reject);
+  });
+}
+function asrBlob(rec) {
+  return fetch('/api/asr', { method: 'POST', body: rec.blob, headers: { 'Content-Type': rec.mime.split(';')[0], 'Authorization': 'Bearer ' + Auth.getToken() } })
+    .then(function (r) { if (r.status === 402) return { expired: true }; return r.json(); });
+}
+
+// 单次麦克风：点一下 → 说一句 → 静音自动结束 → 识别 → 发送
+var micBusy = false;
+function setMicBtn(rec) {
+  var b = document.getElementById('micBtn');
+  b.classList.toggle('rec', !!rec);
+}
+function micOnce() {
+  if (micBusy || inCall || sending) return;
+  micBusy = true; setMicBtn(true); setStatus(t('recognizing'));
+  recordUtterance({ maxMs: 9000 }).then(function (rec) {
+    return asrBlob(rec).then(function (d) {
+      setMicBtn(false); micBusy = false; setStatus(t('online'));
+      if (d && d.expired) { alert(t('sub_expired_alert')); location.href = '/pricing.html'; return; }
+      var tx = ((d && d.text) || '').trim();
+      if (tx) { document.getElementById('msgInput').value = tx; send(); }
+      else { setStatus(t('didnt_hear')); setTimeout(function () { setStatus(t('online')); 1600 }); }
+    });
+  }).catch(function (err) { setMicBtn(false); micBusy = false; setStatus(t('online')); micError(err); });
+}
+
+// ---------- 电话持续通话 ----------
+var inCall = false;
+function renderCallUI(on) {
+  document.getElementById('callBar').classList.toggle('on', on);
+  document.getElementById('normalDock').classList.toggle('hide', on);
+  var ca = document.querySelector('.call-ava');
+  if (ca) ca.classList.toggle('speaking', on);
+}
+function setCallHint(s) { document.getElementById('callHint').textContent = s; }
+function enterCall() {
+  if (inCall) return;
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
+    s.getTracks().forEach(function (t) { t.stop(); });
+    inCall = true; renderCallUI(true); callLoop();
+  }).catch(function (err) { inCall = false; renderCallUI(false); micError(err); });
+}
+function exitCall() { inCall = false; stopStream(); renderCallUI(false); setStatus(t('online')); }
+function callLoop() {
+  if (!inCall) return;
+  setStatus(t('listening')); setCallHint(t('listening'));
+  recordUtterance({ maxMs: 9000 }).then(function (rec) {
+    if (!inCall) return;
+    if (!rec.heard) { setTimeout(callLoop, 250); return; }
+    setStatus(t('recognizing')); setCallHint(t('recognizing'));
+    return asrBlob(rec).then(function (d) {
+      if (!inCall) return;
+      if (d && d.expired) { exitCall(); alert(t('sub_expired_alert')); location.href = '/pricing.html'; return; }
+      var tx = ((d && d.text) || '').trim();
+      if (!tx) { setTimeout(callLoop, 250); return; }
+      setStatus(t('typing')); setCallHint(t('typing'));
+      sending = true;
+      var userBubble = addMsg(tx, 'user');
+      var tb = typingBubble();
+      Auth.post('/api/chat', { message: tx, mode: mode, courseInfo: courseData, nativeLang: nativeLang, targetLang: targetLang, character: character, teacherId: teacherId })
+        .then(function (r) {
+          tb.remove();
+          if (r.status === 402) { exitCall(); alert(t('sub_expired_alert')); location.href = '/pricing.html'; throw new Error('expired'); }
+          if (!r.ok) throw new Error('fail');
+          var data = r.data;
+          if (data.user_translation) addSub(userBubble, data.user_translation);
+          if (data.speakLang) aiSpeakLang = data.speakLang;
+          if (data.reply) {
+            addMsg(data.reply, 'ai', data.translation || '', data.teaching_point || '', data.speakLang || aiSpeakLang);
+            setCallHint(data.reply.slice(0, 30));
+            return speak(data.reply, data.speakLang || aiSpeakLang);
+          }
+        }).catch(function () {}).then(function () {
+          sending = false; setStatus(t('online'));
+          if (inCall) setTimeout(callLoop, 250);
+        });
+    });
+  }).catch(function (err) { if (inCall) { micError(err); exitCall(); } });
+}
+document.addEventListener('rt-i18n-done', function () { applyI18n(); paintSceneChips(); });
+</script>
+</body>
+</html>

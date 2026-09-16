@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12b3a3">
+<link rel="manifest" href="/manifest.json">
+<title>管理后台 · 兑换码</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(170deg,#eafaf6,#eef5ff 46%,#fff3ec);color:#10242e;min-height:100vh;padding:18px}
+.wrap{max-width:960px;margin:0 auto}
+h1{font-size:20px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+h1 a{font-size:13px;font-weight:600;text-decoration:none;background:#fff;border:1px solid #e2e9ec;border-radius:10px;padding:7px 12px;color:#0c8f83}
+.card{background:#fff;border:1px solid #e7eef1;border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 10px 30px rgba(16,60,70,.08)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select,input,button{padding:11px 14px;border-radius:12px;border:1.5px solid #dfe8eb;background:#fff;color:#10242e;font-size:15px;outline:none;font-family:inherit}
+input:focus,select:focus{border-color:#12b3a3;box-shadow:0 0 0 3px #d9f7f2}
+button{cursor:pointer;min-height:44px}
+button.primary{background:linear-gradient(135deg,#12b3a3,#1aa7c9);border:none;color:#fff;font-weight:800;box-shadow:0 8px 20px rgba(18,150,160,.3)}
+button.ghost{background:#eef3f5;border:1px solid #dde7ea;color:#33454f;font-weight:700}
+.stat{display:flex;gap:26px;margin:14px 0;flex-wrap:wrap}
+.stat div b{font-size:24px;color:#0c8f83}
+.stat div span{display:block;font-size:12px;color:#7c909a}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #eef3f5;white-space:nowrap}
+th{color:#7c909a;font-weight:700}
+.tag-used{color:#ff5a5f}.tag-new{color:#22c076}
+.generated{background:#f3f8f9;border:1px dashed #b9d6d2;border-radius:12px;padding:12px;margin-top:12px;max-height:200px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.9;word-break:break-all}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{background:#fff;border:1.5px solid #dfe8eb;color:#33454f;font-weight:700}
+.tabs button.on{background:linear-gradient(135deg,#12b3a3,#1aa7c9);border-color:transparent;color:#fff}
+.hide{display:none!important}
+.muted{color:#7c909a;font-size:12.5px}
+.err{color:#ff5a5f}
+@media (max-width:640px){body{padding:12px}.card{padding:14px;border-radius:16px}h1{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🛠️ 运营管理后台 <a href="/">← 返回首页</a></h1>
+
+  <div class="card" id="loginCard">
+    <div class="muted" style="margin-bottom:10px">输入管理员密钥（由部署者在服务端 .env 的 ADMIN_KEY 配置，请勿向他人透露）</div>
+    <div class="row">
+      <input type="password" id="adminKey" placeholder="ADMIN_KEY" style="flex:1;min-width:200px">
+      <button class="primary" onclick="login()">进入后台</button>
+    </div>
+    <div class="muted err" id="loginErr" style="margin-top:8px"></div>
+  </div>
+
+  <div id="panel" class="hide">
+    <div class="tabs">
+      <button class="on" id="tCodes" onclick="tab('codes')">兑换码</button>
+      <button id="tUsers" onclick="tab('users')">用户 / 订单</button>
+      <button class="ghost" style="margin-left:auto" onclick="logout()">锁定</button>
+    </div>
+
+    <div id="paneCodes">
+      <div class="card">
+        <div class="row">
+          <select id="codeType">
+            <option value="week">周卡（7天）</option>
+            <option value="month">月卡（30天）</option>
+          </select>
+          <input type="number" id="codeCount" value="20" min="1" max="500" style="width:110px">
+          <button class="primary" onclick="genCodes()">批量生成</button>
+          <button class="ghost" onclick="exportCsv()">导出 CSV</button>
+          <button class="ghost" onclick="loadCodes()">刷新</button>
+        </div>
+        <div class="stat">
+          <div><b id="totalN">0</b><span>总码数</span></div>
+          <div><b id="unusedN">0</b><span>未使用</span></div>
+        </div>
+        <div class="generated" id="genBox" style="display:none"></div>
+      </div>
+      <div class="card"><div class="table-wrap">
+        <table>
+          <thead><tr><th>兑换码</th><th>类型</th><th>状态</th><th>使用者</th><th>生成时间</th><th>使用时间</th></tr></thead>
+          <tbody id="codesBody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <div id="paneUsers" class="hide">
+      <div class="card">
+        <div class="stat">
+          <div><b id="userN">0</b><span>注册用户</span></div>
+          <div><b id="orderN">0</b><span>订单总数</span></div>
+        </div>
+        <h3 style="font-size:14px;margin:10px 0">用户</h3>
+        <div class="table-wrap"><table><thead><tr><th>邮箱</th><th>套餐</th><th>剩余</th><th>到期</th><th>注册</th></tr></thead>
+        <tbody id="usersBody"></tbody></table></div>
+        <h3 style="font-size:14px;margin:18px 0 10px">最近订单（仅支付成功入账）</h3>
+        <div class="table-wrap"><table><thead><tr><th>订单</th><th>邮箱</th><th>套餐</th><th>渠道</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
+        <tbody id="ordersBody"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var KEY=sessionStorage.getItem('admin_key')||'';
+function headers(){return {'Content-Type':'application/json','X-Admin-Key':KEY};}
+function login(){
+  KEY=document.getElementById('adminKey').value.trim();
+  if(!KEY){document.getElementById('loginErr').textContent='请输入密钥';return;}
+  document.getElementById('loginErr').textContent='';
+  fetch('/api/admin/codes',{headers:{'X-Admin-Key':KEY}}).then(function(r){ if(!r.ok) throw new Error(); sessionStorage.setItem('admin_key',KEY); show(); })
+    .catch(function(){ document.getElementById('loginErr').textContent='密钥错误，请检查大小写、不要带空格；密钥由部署者在服务端 .env 的 ADMIN_KEY 配置'; });
+}
+document.getElementById('adminKey').addEventListener('keydown',function(e){ if(e.key==='Enter') login(); });
+function logout(){ sessionStorage.removeItem('admin_key'); location.reload(); }
+function show(){ document.getElementById('loginCard').classList.add('hide'); document.getElementById('panel').classList.remove('hide'); loadCodes(); loadUsers(); }
+function tab(t){
+  document.getElementById('paneCodes').classList.toggle('hide',t!=='codes');
+  document.getElementById('paneUsers').classList.toggle('hide',t!=='users');
+  document.getElementById('tCodes').classList.toggle('on',t==='codes');
+  document.getElementById('tUsers').classList.toggle('on',t==='users');
+  if(t==='users') loadUsers();
+}
+async function genCodes(){
+  var type=document.getElementById('codeType').value;
+  var count=parseInt(document.getElementById('codeCount').value,10)||1;
+  var r=await fetch('/api/admin/codes/generate',{method:'POST',headers:headers(),body:JSON.stringify({type:type,count:count})}).then(function(r){return r.json();});
+  if(r.created){ var box=document.getElementById('genBox'); box.style.display='block'; box.textContent=r.created.join('\n'); loadCodes(); }
+  else alert(r.error||'生成失败');
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+function fmt(ts){ return ts?String(ts).slice(0,16).replace('T',' '):'-'; }
+async function loadCodes(){
+  var r=await fetch('/api/admin/codes',{headers:{'X-Admin-Key':KEY}}).then(function(r){return r.json();});
+  document.getElementById('totalN').textContent=r.total||0;
+  document.getElementById('unusedN').textContent=r.unused||0;
+  var tb=document.getElementById('codesBody'); tb.innerHTML='';
+  (r.codes||[]).slice(0,200).forEach(function(c){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(c.code)+'</td><td>'+(c.type==='week'?'周卡':'月卡')+'</td>'+
+      '<td class="'+(c.used?'tag-used':'tag-new')+'">'+(c.used?'已使用':'未使用')+'</td>'+
+      '<td>'+esc(c.usedBy||'-')+'</td><td class="muted">'+fmt(c.createdAt)+'</td><td class="muted">'+fmt(c.usedAt)+'</td>';
+    tb.appendChild(tr);
+  });
+}
+function exportCsv(){ window.open('/api/admin/codes/export.csv?adminKey='+encodeURIComponent(KEY),'_blank'); }
+async function loadUsers(){
+  var r=await fetch('/api/admin/users',{headers:{'X-Admin-Key':KEY}}).then(function(r){return r.json();});
+  document.getElementById('userN').textContent=r.totalUsers||0;
+  document.getElementById('orderN').textContent=r.totalOrders||0;
+  var ub=document.getElementById('usersBody'); ub.innerHTML='';
+  (r.users||[]).slice().reverse().forEach(function(u){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(u.email)+'</td><td>'+esc(u.plan)+'</td><td>'+esc(u.daysLeft)+'天</td><td class="muted">'+fmt(u.until)+'</td><td class="muted">'+esc((u.createdAt||'').slice(0,10))+'</td>';
+    ub.appendChild(tr);
+  });
+  var ob=document.getElementById('ordersBody'); ob.innerHTML='';
+  (r.orders||[]).forEach(function(o){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="muted">'+esc(String(o.id).slice(0,10))+'</td><td>'+esc(o.email)+'</td><td>'+(o.plan==='week'?'周卡':'月卡')+'</td><td>'+esc(o.channel)+'</td><td>'+esc(o.currency)+' '+esc(o.amount)+'</td><td>'+esc(o.status)+'</td><td class="muted">'+fmt(o.createdAt)+'</td>';
+    ob.appendChild(tr);
+  });
+}
+if(KEY) show();
+</script>
+</body>
+</html>

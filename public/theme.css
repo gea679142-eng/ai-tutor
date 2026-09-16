@@ -1,0 +1,216 @@
+/* ============ AI Language Partner · 统一设计系统 ============ */
+:root{
+  --brand:#12b3a3; --brand-d:#0c8f83; --brand-l:#d9f7f2;
+  --accent:#ff7a59; --accent-d:#f05f3c;
+  --ink:#10242e; --ink-2:#4a606b; --ink-3:#7c909a;
+  --paper:#ffffff; --line:#e7eef1;
+  --female:#ff8fb0; --male:#4d9be6;
+  --ok:#22c076; --warn:#ffb020; --bad:#ff5a5f;
+  --grad:linear-gradient(135deg,#12b3a3 0%,#1aa7c9 55%,#3d7be0 100%);
+  --grad-warm:linear-gradient(135deg,#ff9a6c 0%,#ff7a9c 100%);
+  --bg:linear-gradient(170deg,#eafaf6 0%,#eef5ff 46%,#fff3ec 100%);
+  --shadow:0 10px 30px rgba(16,60,70,.10);
+  --shadow-sm:0 4px 14px rgba(16,60,70,.08);
+  --shadow-lg:0 22px 60px rgba(12,60,70,.18);
+  --r:20px; --r-sm:14px;
+  --tap:46px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--ink); background:var(--bg); background-attachment:fixed;
+  min-height:100vh; line-height:1.55; -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+/* 漂浮光斑背景 */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(420px 320px at 12% -6%,rgba(18,179,163,.20),transparent 60%),
+            radial-gradient(460px 340px at 100% 0%,rgba(255,122,89,.16),transparent 55%),
+            radial-gradient(520px 420px at 50% 118%,rgba(61,123,224,.14),transparent 60%);}
+h1,h2,h3{line-height:1.25;margin:0 0 .4em}
+p{margin:.3em 0}
+a{color:var(--brand-d);text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{max-width:100%;display:block}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
+::selection{background:var(--brand-l)}
+
+.wrap{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+.wrap-narrow{max-width:520px;margin:0 auto;padding:0 16px}
+
+/* 顶栏 */
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;
+  padding:calc(10px + var(--safe-t)) 14px 10px;
+  background:rgba(255,255,255,.72);backdrop-filter:saturate(160%) blur(14px);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);border-bottom:1px solid rgba(231,238,241,.8)}
+.topbar .title{font-weight:800;font-size:17px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{min-width:var(--tap);min-height:40px;padding:0 12px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:14px;font-weight:600;box-shadow:var(--shadow-sm);transition:.15s}
+.iconbtn:active{transform:scale(.94)}
+.iconbtn.home{color:var(--brand-d)}
+
+/* 卡片 */
+.card{background:var(--paper);border:1px solid rgba(231,238,241,.9);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
+.card.soft{box-shadow:var(--shadow-sm)}
+.grid{display:grid;gap:14px}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--tap);padding:0 22px;
+  border-radius:999px;font-size:16px;font-weight:800;color:#fff;background:var(--grad);
+  box-shadow:0 10px 22px rgba(18,150,160,.32);transition:transform .12s,box-shadow .2s,filter .2s;width:100%}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn[disabled]{opacity:.55;box-shadow:none}
+.btn.ghost{background:#fff;color:var(--brand-d);border:1.5px solid var(--brand);box-shadow:none}
+.btn.warm{background:var(--grad-warm);box-shadow:0 10px 22px rgba(255,122,150,.30)}
+.btn.dark{background:linear-gradient(135deg,#2b3a4a,#10242e);box-shadow:0 10px 22px rgba(16,36,46,.28)}
+.btn.sm{min-height:38px;padding:0 14px;font-size:14px;width:auto}
+.btn.block{width:100%}
+
+/* 表单 */
+.field{margin:12px 0}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.input,select.input,textarea.input{width:100%;min-height:var(--tap);padding:11px 14px;border-radius:14px;border:1.5px solid var(--line);
+  background:#fff;outline:none;transition:.15s;font-size:16px}
+.input:focus{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-l)}
+select.input{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;background-size:6px 6px,6px 6px;background-repeat:no-repeat;padding-right:38px}
+
+/* 头像 */
+.avatar{position:relative;border-radius:50%;object-fit:cover;background:#e9f2f4;flex:none}
+.avatar.ring{padding:3px;background:conic-gradient(from 200deg,var(--brand),#7bd0ff,var(--accent),var(--brand));}
+.avatar.ring>img,.avatar.ring>div{border-radius:50%;width:100%;height:100%;object-fit:cover;background:#fff}
+.pulse-dot{position:absolute;right:6%;bottom:6%;width:15px;height:15px;border-radius:50%;background:var(--ok);border:3px solid #fff}
+.pulse-dot::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--ok);animation:ping 1.8s ease-out infinite}
+@keyframes ping{0%{transform:scale(.7);opacity:.9}80%,100%{transform:scale(1.7);opacity:0}}
+
+/* 标签 / 徽章 */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;
+  background:var(--brand-l);color:var(--brand-d)}
+.chip.warm{background:#ffe7dd;color:var(--accent-d)}
+.chip.gray{background:#eef3f5;color:var(--ink-2)}
+
+/* 老师选择网格 */
+.teacher-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.teacher-card{position:relative;background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:12px;text-align:center;transition:.18s;box-shadow:var(--shadow-sm)}
+.teacher-card .ph{width:100%;aspect-ratio:1/1;border-radius:16px;object-fit:cover;margin-bottom:10px;background:#eef3f5}
+.teacher-card .nm{font-weight:800;font-size:14px}
+.teacher-card .st{font-size:12px;color:var(--ink-3);margin-top:2px}
+.teacher-card.sel{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-l),var(--shadow)}
+.teacher-card.sel::after{content:"✓";position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;
+  background:var(--grad);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:var(--shadow-sm)}
+
+/* 消息气泡 */
+.bubble{max-width:80%;padding:11px 14px;border-radius:18px;font-size:16px;word-wrap:break-word;white-space:pre-wrap}
+.bubble.ai{background:#fff;border:1px solid var(--line);border-top-left-radius:6px;box-shadow:var(--shadow-sm)}
+.bubble.me{background:var(--grad);color:#fff;border-top-right-radius:6px;margin-left:auto}
+.bubble .sub{display:block;margin-top:5px;font-size:14px;opacity:.82;line-height:1.45}
+.bubble .tp{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:700;color:var(--brand-d);background:var(--brand-l);padding:3px 9px;border-radius:999px}
+.bubble.me .tp{color:#fff;background:rgba(255,255,255,.22)}
+
+/* 底部停靠栏 */
+.dock{position:sticky;bottom:0;z-index:30;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding:10px 12px calc(10px + var(--safe-b))}
+
+/* 动效 */
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pop{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.float{animation:floaty 5s ease-in-out infinite}
+.pop{animation:pop .28s cubic-bezier(.2,1.4,.4,1) both}
+.skeleton{background:linear-gradient(90deg,#eef3f5 25%,#f7fafb 37%,#eef3f5 63%);background-size:800px 100%;animation:shimmer 1.3s infinite linear;border-radius:10px;color:transparent}
+
+/* 联系方式条 */
+.contact-bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;font-size:13px;color:var(--ink-3);padding:14px 0 calc(18px + var(--safe-b))}
+.contact-bar a{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2);font-weight:600}
+.contact-bar .wa{color:#1fa855}
+
+/* 实用 */
+.row{display:flex;align-items:center;gap:10px}.row.between{justify-content:space-between}.row.wrap{flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.center{display:flex;align-items:center;justify-content:center}
+.muted{color:var(--ink-3)} .small{font-size:13px} .tiny{font-size:12px}
+.mt8{margin-top:8px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+.hide{display:none!important}
+.text-center{text-align:center}
+.brand-grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900}
+
+/* 手机自适应 */
+@media (max-width:640px){
+  .wrap,.wrap-narrow{padding:0 12px}
+  .teacher-grid{gap:10px}
+  .card{padding:14px;border-radius:16px}
+  .bubble{font-size:16px;max-width:85%}
+  h1{font-size:22px}h2{font-size:19px}
+}
+@media (max-width:380px){
+  .teacher-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .btn{font-size:15px}
+}
+/* 桌面端：内容居中，给聊天/课程一个接近手机的舒适列宽，首页可略宽 */
+@media (min-width:900px){
+  body{font-size:16px}
+}
+
+/* ============================================================
+   Cinematic 质感增强层（不改动既有布局，仅做层次/反馈/动效升级）
+   安全原则：绝不用"起始 opacity:0 + both 填充"的纯CSS动画隐藏关键内容
+   （内嵌 WebView 可能把动画卡在第0帧导致白屏）；入场一律交给 GSAP，
+   且 GSAP 失败/降级时内容默认可见。
+   ============================================================ */
+
+/* 卡片 / 入口 / 老师卡：桌面端悬浮抬升 + 阴影呼吸，移动端保持 :active */
+.card,.teacher-card,.entry{will-change:transform;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease,border-color .22s ease}
+@media (hover:hover) and (pointer:fine){
+  .card.hover-lift,.teacher-card:hover,.entry:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+  .iconbtn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(16,60,70,.14)}
+  .btn:hover:not([disabled]){transform:translateY(-1px);filter:saturate(1.06) brightness(1.02);box-shadow:0 14px 30px rgba(18,150,160,.38)}
+  .btn.warm:hover:not([disabled]){box-shadow:0 14px 30px rgba(255,122,150,.38)}
+}
+
+/* 主按钮：光泽扫过 */
+.btn{position:relative;overflow:hidden;isolation:isolate}
+.btn::after{content:"";position:absolute;top:0;left:-80%;width:55%;height:100%;z-index:1;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);transform:skewX(-18deg)}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover::after{animation:fxSheen .9s ease}
+}
+@keyframes fxSheen{0%{left:-80%}55%,100%{left:140%}}
+
+/* 消息气泡：默认可见，弹入动效由 GSAP(FX.pop) 负责，避免纯CSS卡0帧白屏 */
+
+/* 头像光环：静态彩色渐变边框（避免旋转带动在线绿点 / 内嵌WebView兼容问题）；通话时用声波 */
+.avatar.ring{background:conic-gradient(from 200deg,var(--brand),#7bd0ff,var(--accent),var(--brand))}
+
+/* 通话中头像声波（由 JS 在 inCall 时给头像加 .speaking） */
+.avatar.speaking{box-shadow:0 0 0 0 rgba(18,179,163,.45);animation:fxWave 1.1s ease-out infinite}
+@keyframes fxWave{0%{box-shadow:0 0 0 0 rgba(18,179,163,.45)}70%{box-shadow:0 0 0 16px rgba(18,179,163,0)}100%{box-shadow:0 0 0 0 rgba(18,179,163,0)}}
+
+/* 点击涟漪 */
+.fx-ripple{position:relative;overflow:hidden}
+.fx-ink{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,.55);pointer-events:none;animation:fxInk .55s ease-out forwards;z-index:0}
+.card .fx-ink,.teacher-card .fx-ink,.entry .fx-ink,.iconbtn .fx-ink{background:rgba(18,150,160,.18)}
+@keyframes fxInk{to{transform:scale(2.6);opacity:0}}
+
+/* 入口卡图标轻浮动 */
+.entry .ico,.hero-ico{animation:floaty 5s ease-in-out infinite}
+
+/* 输入聚焦更柔 */
+.input:focus{transition:border-color .18s,box-shadow .18s}
+
+/* 细滚动条（聊天/列表区） */
+.chat-scroll::-webkit-scrollbar,.scroll-thin::-webkit-scrollbar{width:6px}
+.chat-scroll::-webkit-scrollbar-thumb,.scroll-thin::-webkit-scrollbar-thumb{background:rgba(16,60,70,.16);border-radius:999px}
+
+/* 数字/统计轻微强调 */
+.stat-num{font-variant-numeric:tabular-nums}
+
+/* 尊重"减少动态效果"系统偏好：关闭非必要动画 */
+@media (prefers-reduced-motion:reduce){
+  body,.bubble,.avatar.ring,.avatar.ring>img,.avatar.ring>div,.entry .ico,.hero-ico{animation:none!important}
+  .card,.teacher-card,.entry,.btn,.iconbtn{transition:none!important}
+  .btn::after{display:none!important}
+}
+

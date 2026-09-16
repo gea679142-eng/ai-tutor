@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Choose your teacher</title>
+<link rel="stylesheet" href="/theme.css">
+<link rel="manifest" href="/manifest.json">
+<style>
+  .gender-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 16px}
+  .gender-card .big{width:150px;height:150px;border-radius:50%;object-fit:cover;box-shadow:var(--shadow)}
+  .gender-card h3{margin:.2em 0 0}
+  .gender-card .voice{font-size:13px;color:var(--ink-3)}
+  .gender-card{cursor:pointer;transition:.18s}
+  .gender-card:active{transform:scale(.98)}
+  .gender-card.female{border-top:5px solid var(--female)}
+  .gender-card.male{border-top:5px solid var(--male)}
+  .step-head{text-align:center;margin:18px 0 16px}
+  .lang-mini{min-width:140px}
+  .preview-bar{position:sticky;bottom:0;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);padding:12px 0 calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="iconbtn home" onclick="location.href='/'">🏠 <span data-i18n="back_home">Home</span></button>
+  <div class="title" data-i18n="pick_teacher">Choose your AI teacher</div>
+  <select id="uiLang" class="input lang-mini" style="min-height:40px;padding:6px 30px 6px 10px"></select>
+</div>
+
+<div class="wrap-narrow">
+  <!-- 步骤1：选性别 -->
+  <section id="step1">
+    <div class="step-head" data-fx>
+      <h1 class="brand-grad-text" data-i18n="pick_teacher">Choose your AI teacher</h1>
+      <p class="muted" data-i18n="pick_partner">Pick a partner and start learning</p>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <div class="card gender-card female" data-fx onclick="pickGender('female')">
+        <img class="big float" src="/images/teachers/f_real.jpg" alt="female">
+        <h3 data-i18n="teacher_female">Female teacher · Mei</h3>
+        <div class="voice" data-i18n="female_voice">Warm, elegant female voice</div>
+      </div>
+      <div class="card gender-card male" data-fx onclick="pickGender('male')">
+        <img class="big float" src="/images/teachers/m_real.jpg" alt="male" style="animation-delay:.6s">
+        <h3 data-i18n="teacher_male">Male teacher · Ming</h3>
+        <div class="voice" data-i18n="male_voice">Deep, magnetic male voice</div>
+      </div>
+    </div>
+    <div class="contact-bar">
+      <a href="mailto:gea679142@gmail.com">✉️ gea679142@gmail.com</a>
+      <a class="wa" href="https://wa.me/14013090888" target="_blank" rel="noopener">💬 WhatsApp</a>
+    </div>
+  </section>
+
+  <!-- 步骤2：选风格 -->
+  <section id="step2" class="hide">
+    <div class="step-head" data-fx>
+      <h2 class="brand-grad-text" data-i18n="teacher_style_q">Which style do you like?</h2>
+      <p class="muted" id="genderHint"></p>
+    </div>
+    <div class="teacher-grid" id="styleGrid"></div>
+    <div class="preview-bar">
+      <button class="btn" id="confirmBtn" onclick="confirmTeacher()">
+        <span data-i18n="start_learning">Start learning →</span>
+      </button>
+      <button class="iconbtn mt8" style="width:100%" onclick="show(1)">← </button>
+    </div>
+  </section>
+</div>
+
+<script src="/vendor/gsap.min.js"></script>
+<script src="/i18n.js"></script>
+<script src="/teachers.js"></script>
+<script src="/auth.js"></script>
+<script src="/app-fx.js"></script>
+<script>
+var chosenGender = 'female', chosenId = 'f_real';
+function show(n){
+  document.getElementById('step1').classList.toggle('hide', n !== 1);
+  document.getElementById('step2').classList.toggle('hide', n !== 2);
+  if (n === 2) buildStyles();
+  if (window.FX) setTimeout(function(){ FX.playEntrance(document.getElementById('step' + n)); }, 20);
+  window.scrollTo(0, 0);
+}
+function pickGender(g){
+  chosenGender = g;
+  var first = teachersByGender(g)[0];
+  chosenId = first.id;
+  document.getElementById('genderHint').textContent =
+    (g === 'female' ? t('teacher_female') : t('teacher_male'));
+  show(2);
+}
+function buildStyles(){
+  var grid = document.getElementById('styleGrid');
+  grid.innerHTML = '';
+  teachersByGender(chosenGender).forEach(function (tc, i) {
+    var card = document.createElement('div');
+    card.className = 'teacher-card' + (tc.id === chosenId ? ' sel' : '');
+    card.setAttribute('data-fx', '');
+    card.innerHTML =
+      '<img class="ph" src="' + teacherImg(tc.id) + '" alt="">' +
+      '<div class="nm">' + styleLabel(tc.style) + '</div>';
+    card.onclick = function () {
+      chosenId = tc.id;
+      grid.querySelectorAll('.teacher-card').forEach(function (c) { c.classList.remove('sel'); });
+      card.classList.add('sel');
+      if (window.FX) FX.pop(card);
+    };
+    grid.appendChild(card);
+  });
+}
+function confirmTeacher(){
+  var btn = document.getElementById('confirmBtn');
+  btn.disabled = true;
+  Auth.post('/api/user/profile', { character: chosenGender, teacherId: chosenId }).then(function (r) {
+    if (r.ok) { location.replace('/'); }
+    else { btn.disabled = false; alert((r.data && r.data.error) || t('err_fail')); }
+  }).catch(function () { btn.disabled = false; });
+}
+document.addEventListener('rt-i18n-done', function () { applyI18n(); buildStyles(); });
+Auth.guard().then(function (u) {
+  // 语言下拉
+  var sel = document.getElementById('uiLang');
+  buildLangSelect(sel, getUiLang(), function (v) { setUiLang(v, true); });
+  // 预选已有老师
+  if (u.teacherId) {
+    chosenId = u.teacherId; chosenGender = teacherGender(u.teacherId);
+  } else {
+    chosenGender = u.character === 'male' ? 'male' : 'female';
+    chosenId = chosenGender === 'male' ? 'm_real' : 'f_real';
+  }
+  var params = new URLSearchParams(location.search);
+  if (params.get('gender')) { pickGender(params.get('gender') === 'male' ? 'male' : 'female'); }
+  applyI18n();
+}).catch(function () {});
+</script>
+</body>
+</html>

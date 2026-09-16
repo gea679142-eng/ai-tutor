@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12b3a3">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/images/xiaomei.jpg">
+<title>AI Language Partner</title>
+<link rel="stylesheet" href="/theme.css">
+<style>
+  .hero{text-align:center;padding:18px 0 6px}
+  .hero h1{font-size:26px;margin-bottom:4px}
+  .hero p{color:var(--ink-3);font-size:14px;margin:0}
+  .teacher-hero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0 4px}
+  .teacher-hero .ring{width:132px;height:132px}
+  .teacher-hero .tname{font-weight:800;font-size:18px;margin-top:6px}
+  .seg{display:flex;background:#eef3f5;border-radius:999px;padding:5px;gap:5px}
+  .seg button{flex:1;min-height:44px;border-radius:999px;font-weight:800;font-size:15px;color:var(--ink-2);transition:.18s}
+  .seg button.on{background:#fff;color:var(--brand-d);box-shadow:var(--shadow-sm)}
+  .entry{position:relative;overflow:hidden;color:#fff;padding:20px;border-radius:var(--r);cursor:pointer;box-shadow:var(--shadow);transition:.16s}
+  .entry:active{transform:scale(.985)}
+  .entry h3{font-size:19px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .entry p{font-size:13px;opacity:.92;margin:0}
+  .entry .big-ico{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:54px;opacity:.25}
+  .e-course{background:linear-gradient(135deg,#12b3a3,#1aa7c9)}
+  .e-chat{background:linear-gradient(135deg,#ff9a6c,#ff7a9c)}
+  .e-hole{background:linear-gradient(135deg,#5b7bf0,#8a63e8)}
+  .stat{display:flex;flex-direction:column;align-items:center;flex:1}
+  .stat b{font-size:21px;color:var(--brand-d)}
+  .stat span{font-size:11.5px;color:var(--ink-3);margin-top:2px;text-align:center}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="mail small muted" id="mail" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+  <span class="chip warm" id="subState" style="max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+  <button class="iconbtn" onclick="location.href='/pricing.html'" data-i18n="renew">Renew</button>
+  <button class="iconbtn" onclick="Auth.logout()" data-i18n="logout">Log out</button>
+</div>
+
+<div class="wrap-narrow">
+  <div class="hero" data-fx>
+    <h1 class="brand-grad-text" data-i18n="app_name">AI Language Partner</h1>
+    <p data-i18n="tagline">Practice speaking with a lifelike AI</p>
+  </div>
+
+  <div class="card teacher-hero" data-fx>
+    <div class="avatar ring" style="position:relative">
+      <img id="teacherImg" src="/images/xiaomei.jpg" alt="teacher">
+      <span class="pulse-dot"></span>
+    </div>
+    <div class="tname" id="teacherName">Mei</div>
+    <div class="chip" id="teacherVoice"></div>
+    <button class="btn ghost sm mt8" onclick="location.href='/teacher.html'">🎭 <span data-i18n="change_teacher">Change teacher</span></button>
+  </div>
+
+  <div class="card mt16" data-fx>
+    <div class="field" style="margin:0 0 12px">
+      <label data-i18n="my_native">My native language (subtitles / translation)</label>
+      <select id="nativeSel" class="input"></select>
+    </div>
+    <div class="field" style="margin:0">
+      <label data-i18n="learn_target">I want to learn (AI speaks this language)</label>
+      <div class="seg" id="targetSeg">
+        <button type="button" data-code="zh">中文</button>
+        <button type="button" data-code="en">English</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt16" data-fx>
+    <div class="small muted" data-i18n="progress_title" style="margin-bottom:10px">Your progress</div>
+    <div class="row between">
+      <div class="stat"><b id="pcXp">0</b><span>XP</span></div>
+      <div class="stat"><b id="pcStreak">0</b><span id="pcStreakCap">🔥</span></div>
+      <div class="stat"><b id="pcDone">0</b><span data-i18n="completed">Done</span></div>
+      <div class="stat"><b id="pcChats">0</b><span data-i18n="stat_chats">Chat turns</span></div>
+    </div>
+  </div>
+
+  <div class="grid mt16">
+    <div class="entry e-course" data-fx onclick="go('/courses.html')">
+      <h3>📚 <span data-i18n="course_entry">Courses</span></h3>
+      <p data-i18n="course_entry_desc">Game-like lessons · real-life scenarios</p><span class="big-ico">🎯</span>
+    </div>
+    <div class="entry e-chat" data-fx onclick="go('/chat.html?mode=chat')">
+      <h3>💬 <span data-i18n="free_chat">Free chat</span></h3>
+      <p data-i18n="free_chat_desc">Relaxed, caring & a little flirty · learn while chatting</p><span class="big-ico">💕</span>
+    </div>
+    <div class="entry e-hole" data-fx onclick="go('/chat.html?mode=treehole')">
+      <h3>🌙 <span data-i18n="treehole_entry">Your tree-hole</span></h3>
+      <p data-i18n="treehole_desc">Vent your feelings · a partner who truly listens</p><span class="big-ico">🫂</span>
+    </div>
+  </div>
+
+  <div class="contact-bar">
+    <a href="mailto:gea679142@gmail.com">✉️ gea679142@gmail.com</a>
+    <a class="wa" href="https://wa.me/14013090888" target="_blank" rel="noopener">💬 WhatsApp +1&nbsp;401&nbsp;309&nbsp;0888</a>
+  </div>
+</div>
+
+<script src="/vendor/gsap.min.js"></script>
+<script src="/i18n.js"></script>
+<script src="/teachers.js"></script>
+<script src="/auth.js"></script>
+<script src="/app-fx.js"></script>
+<script>
+var nativeLang = 'en', targetLang = 'zh', character = 'female', teacherId = 'f_real', currentUser = null;
+var saveTimer = null;
+
+function paintProgress(p) {
+  p = p || {};
+  document.getElementById('pcXp').textContent = p.xp || 0;
+  document.getElementById('pcStreak').textContent = p.streakDays || 0;
+  document.getElementById('pcStreakCap').textContent = t('streak', { n: p.streakDays || 0 });
+  document.getElementById('pcDone').textContent = p.completedCount || 0;
+  document.getElementById('pcChats').textContent = p.chatCount || 0;
+}
+function paintTeacher() {
+  document.getElementById('teacherImg').src = teacherImg(teacherId);
+  document.getElementById('teacherName').textContent = character === 'male' ? t('teacher_male') : t('teacher_female');
+  document.getElementById('teacherVoice').textContent = character === 'male' ? t('male_voice') : t('female_voice');
+}
+function buildNativeSelect() {
+  var sel = document.getElementById('nativeSel');
+  sel.innerHTML = '';
+  UI_LANGS.forEach(function (code) {
+    var o = document.createElement('option');
+    o.value = code; o.textContent = UI_LANG_NAMES[code];
+    if (code === nativeLang) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.onchange = function () {
+    nativeLang = sel.value;
+    localStorage.setItem('nativeLang', nativeLang);
+    setUiLang(nativeLang);
+    // 母语与所学语言不能相同（目标语仅中/英）：若冲突，自动把目标语切到另一门
+    if (nativeLang === targetLang && (nativeLang === 'zh' || nativeLang === 'en')) {
+      targetLang = nativeLang === 'zh' ? 'en' : 'zh';
+      localStorage.setItem('targetLang', targetLang);
+      paintTargetSeg();
+    }
+    saveProfile();
+  };
+}
+function langSameTip() {
+  var msg = nativeLang === 'zh' ? '学习语言要和你的母语不同哦～' : 'Please choose a language different from your native language.';
+  var d = document.createElement('div');
+  d.textContent = msg;
+  d.style.cssText = 'position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:999;background:rgba(16,36,46,.92);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;max-width:88vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.22)';
+  document.body.appendChild(d);
+  setTimeout(function () { d.remove(); }, 2200);
+}
+function paintTargetSeg() {
+  document.querySelectorAll('#targetSeg button').forEach(function (b) {
+    b.classList.toggle('on', b.getAttribute('data-code') === targetLang);
+    b.onclick = function () {
+      var code = b.getAttribute('data-code');
+      if (code === nativeLang) { langSameTip(); return; } // 不允许学和母语相同的语言
+      targetLang = code;
+      localStorage.setItem('targetLang', targetLang);
+      paintTargetSeg(); saveProfile();
+    };
+  });
+}
+function saveProfile() { clearTimeout(saveTimer); saveTimer = setTimeout(saveProfileNow, 350); }
+function saveProfileNow() {
+  return Auth.post('/api/user/profile', { nativeLang: nativeLang, targetLang: targetLang, character: character, teacherId: teacherId });
+}
+function go(path) {
+  if (!currentUser) return; // 资料未加载完成，禁止用默认值脏写后端
+  if (nativeLang === targetLang) { langSameTip(); return; } // 同语言无法构成双语学习，拦截
+  localStorage.setItem('nativeLang', nativeLang);
+  localStorage.setItem('targetLang', targetLang);
+  localStorage.setItem('character', character);
+  localStorage.setItem('teacherId', teacherId);
+  saveProfileNow().catch(function () {}).then(function () { location.href = path; });
+}
+document.addEventListener('rt-i18n-done', function () { paintTeacher(); });
+Auth.guard().then(function (u) {
+  currentUser = u;
+  document.getElementById('mail').textContent = u.email;
+  if (u.nativeLang) nativeLang = u.nativeLang;
+  if (u.targetLang) targetLang = u.targetLang;
+  // 纠正历史脏数据：母语与目标语相同（仅中/英可能）时，自动把目标语切到另一门，保证双语
+  if (nativeLang === targetLang && (nativeLang === 'zh' || nativeLang === 'en')) {
+    targetLang = nativeLang === 'zh' ? 'en' : 'zh';
+  }
+  if (u.character) character = u.character;
+  teacherId = u.teacherId || (character === 'male' ? 'm_real' : 'f_real');
+  var prefs = { nativeLang: nativeLang, targetLang: targetLang, character: character, teacherId: teacherId };
+  Object.keys(prefs).forEach(function (k) { localStorage.setItem(k, prefs[k]); });
+  if (u.nativeLang === u.targetLang) saveProfileNow(); // 纠正后回写后端
+  setUiLang(nativeLang);
+  document.getElementById('subState').textContent = Auth.planText(u.subscription);
+  paintProgress(u.progress); paintTeacher(); buildNativeSelect(); paintTargetSeg();
+  if (!u.subscription.active) setTimeout(function () { location.href = '/pricing.html'; }, 500);
+}).catch(function () {});
+</script>
+</body>
+</html>
