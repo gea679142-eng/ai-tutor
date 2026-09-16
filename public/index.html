@@ -195,7 +195,7 @@ Auth.guard().then(function (u) {
   Object.keys(prefs).forEach(function (k) { localStorage.setItem(k, prefs[k]); });
   if (u.nativeLang === u.targetLang) saveProfileNow(); // 纠正后回写后端
   setUiLang(nativeLang);
-  document.getElementById('subState').textContent = Auth.planText(u.subscription);
+  document.getElementById('subState').textContent = (u.credits || 0) + ' credits';
   paintProgress(u.progress); paintTeacher(); buildNativeSelect(); paintTargetSeg();
   if ((u.credits || 0) < 0.25) setTimeout(function () { location.href = '/pricing.html'; }, 500);
 }).catch(function () {});
