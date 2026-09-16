@@ -637,7 +637,7 @@ const PAY = {
   whopAccount: process.env.WHOP_ACCOUNT_ID || '',
   whopProductWeek: process.env.WHOP_PRODUCT_WEEK || '',
   whopProductMonth: process.env.WHOP_PRODUCT_MONTH || '',
-  whopSandbox: (process.env.WHOP_SANDBOX || 'false') === 'true',
+  whopSandbox: false,
   nowpayKey: process.env.NOWPAYMENTS_API_KEY || '',
   nowpayIpn: process.env.NOWPAYMENTS_IPN_SECRET || '',
   nowpaySandbox: (process.env.NOWPAYMENTS_SANDBOX || 'true') !== 'false',
