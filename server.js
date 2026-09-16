@@ -140,9 +140,9 @@ const TRIAL_DAYS = 3;                                     // 新注册免费试�
 // 1 积分 ≈ 1 分钟对话（4 轮 × 15 秒）。充值档位：$9.9→50 / $19.9→120 / $39.9→400。
 // 消耗：对话/跟读 0.25 积分/轮；做题/重听 0.05 积分/次。积分永久有效，扣完即停。
 const CREDIT_PACKS = {
-  pack50:  { usd: 9.9,  credits: 30,  label: 'Starter · 30 credits (~30 min)', planId: process.env.WHOP_PLAN_PACK50 || 'plan_TFoFTKnYJPwGm', route: 'starter-30-ai-chat-credits' },
-  pack120: { usd: 19.9, credits: 100, label: 'Pro · 100 credits (~100 min)', planId: process.env.WHOP_PLAN_PACK120 || 'plan_Eu9nwvaNWstX2', route: 'pro-100-ai-chat-credits' },
-  pack400: { usd: 39.9, credits: 250, label: 'VIP · 250 credits (~4 hr)', planId: process.env.WHOP_PLAN_PACK400 || 'plan_RbQK6PxPqYzJp', route: 'vip-250-ai-chat-credits' },
+  pack50:  { usd: 9.9,  credits: 100, label: 'Starter · 100 credits (~7 min)', planId: process.env.WHOP_PLAN_PACK50 || 'plan_TFoFTKnYJPwGm', route: 'starter-30-ai-chat-credits' },
+  pack120: { usd: 19.9, credits: 350, label: 'Pro · 350 credits (~25 min)', planId: process.env.WHOP_PLAN_PACK120 || 'plan_Eu9nwvaNWstX2', route: 'pro-100-ai-chat-credits' },
+  pack400: { usd: 39.9, credits: 900, label: 'VIP · 900 credits (~1 hr)', planId: process.env.WHOP_PLAN_PACK400 || 'plan_RbQK6PxPqYzJp', route: 'vip-250-ai-chat-credits' },
 };
 const CHAT_COST = 0.25;   // 对话一轮 / 跟读打分
 const QUIZ_COST = 0.05;   // 做题 / 重听
