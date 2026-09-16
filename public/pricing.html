@@ -60,7 +60,6 @@
   <h2>Choose a credit pack</h2>
   <div class="packs" data-fx id="packs"></div>
   <button class="btn warm" id="payBtn" onclick="pay()">Pay</button>
-  <button class="btn ghost" onclick="openTestModal()" style="margin-top:8px;border-style:dashed;border-color:var(--brand)">🧪 Test payment (demo card)</button>
   <div class="msg" id="payMsg"></div>
 
   <div style="text-align:center;color:var(--ink-3);font-size:12px;margin:18px 0 8px">— or redeem a code —</div>
@@ -76,22 +75,6 @@
   </div>
 </div>
 
-<!-- 测试支付模态框（模拟信用卡输入页） -->
-<div class="modal-mask" id="testModal">
-  <div class="modal">
-    <h3>💳 Card Payment</h3>
-    <div class="hint">Test mode — use demo card 4242 4242 4242 4242</div>
-    <label>Card number</label>
-    <input id="tCard" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242">
-    <div class="row">
-      <div><label>Expiry</label><input id="tExp" placeholder="MM/YY" value="12/30"></div>
-      <div><label>CVC</label><input id="tCvc" placeholder="123" value="123"></div>
-    </div>
-    <button class="paybtn" onclick="submitTestPay()">Pay $<span id="tAmt">9.9</span></button>
-    <button class="closebtn" onclick="closeTestModal()">Cancel</button>
-  </div>
-</div>
-
 <script src="/vendor/gsap.min.js"></script>
 <script src="/auth.js"></script>
 <script src="/app-fx.js"></script>
@@ -100,7 +83,7 @@ var me=null, selected='pack120', packs={};
 function paintBalance(){
   var c=(me&&me.credits)||0;
   document.getElementById('balBig').textContent=c+' 积分';
-  document.getElementById('balMin').textContent='≈ '+Math.round(c/15)+' minutes of chat';
+  document.getElementById('balMin').textContent='';
 }
 function renderPacks(){
   var el=document.getElementById('packs'); el.innerHTML='';
@@ -109,11 +92,11 @@ function renderPacks(){
     var p=packs[id]; if(!p) return;
     var d=document.createElement('div');
     d.className='pack'+(selected===id?' selected':'');
-    var mins=Math.round(p.credits/15); // 5积分/轮 × 20秒/轮 = 15秒/积分
-    var minsLabel=mins>=60? (Math.floor(mins/60)+'h '+mins%60+'m') : mins+' min';
+    var mins=0;
+    var minsLabel='';
     d.innerHTML='<div class="ic">'+(id==='pack50'?'🌱':id==='pack120'?'⭐':'👑')+'</div>'
       +'<div class="info"><div class="nm">'+p.label.split(' · ')[0]+'</div>'
-      +'<div class="sub">'+p.credits+' credits · ≈ '+minsLabel+'</div></div>'
+      +'<div class="sub">'+p.credits+' credits</div></div>'
       +'<div><div class="pr">$'+p.usd+'</div></div>';
     if(id==='pack120'){ var t=document.createElement('div'); t.className='tag'; t.textContent='POPULAR'; d.appendChild(t); }
     d.onclick=function(){selected=id;renderPacks();};
@@ -134,36 +117,6 @@ async function pay(){
   btn.disabled=false; btn.textContent='Pay';
   if(s.ok && s.data.checkoutUrl){ pm('payMsg','✓ Redirecting to checkout...','ok'); window.location.href=s.data.checkoutUrl; }
   else pm('payMsg','Payment failed: '+(s.data&&(s.data.error||s.data.detail)),'err');
-}
-// 测试支付：打开信用卡模态框
-function openTestModal(){
-  var p=packs[selected]; if(!p) return;
-  document.getElementById('tAmt').textContent=p.usd;
-  document.getElementById('testModal').classList.add('show');
-}
-function closeTestModal(){ document.getElementById('testModal').classList.remove('show'); }
-async function submitTestPay(){
-  var card=document.getElementById('tCard').value.trim();
-  var p=packs[selected];
-  var btn=document.querySelector('.paybtn'); btn.disabled=true; btn.textContent='Processing...';
-  try {
-    var s1=await Auth.post('/api/pay/test/start',{pack:selected});
-    if(!s1.ok) throw new Error(s1.data&&s1.data.error||'start_failed');
-    await new Promise(r=>setTimeout(r,800));
-    var s2=await Auth.post('/api/pay/test/complete',{orderId:s1.data.orderId,card:card});
-    btn.disabled=false; btn.textContent='Pay $'+p.usd;
-    if(s2.ok){
-      closeTestModal();
-      pm('payMsg','✓ Payment successful! +'+s2.data.added+' credits. Balance: '+s2.data.credits,'ok');
-      var meResp=await Auth.get('/api/auth/me'); me=meResp.user; paintBalance();
-      setTimeout(function(){location.href='/chat.html';},1200);
-    } else {
-      pm('payMsg','Payment failed: '+(s2.data&&(s2.data.error||s2.data.message||s2.data)),'err');
-    }
-  } catch(e){
-    btn.disabled=false; btn.textContent='Pay $'+p.usd;
-    pm('payMsg','Error: '+e.message,'err');
-  }
 }
 async function redeem(){
   var code=document.getElementById('codeInput').value.trim();

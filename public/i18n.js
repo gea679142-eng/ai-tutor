@@ -24,6 +24,7 @@ var I18N = {
     email: 'Email', password: 'Password (min 6 characters)', pw_ph: 'Enter password',
     login_btn: 'Log in', reg_btn: 'Sign up & start',
     login_tip: 'Weekly / monthly subscription or redeem a code to unlock',
+    remember_me: 'Remember me',
     loading: 'Loading…',
     // 首页
     ai_learning: '🌏 AI Language Learning',
@@ -99,6 +100,7 @@ var I18N = {
     email: '邮箱', password: '密码（至少6位）', pw_ph: '输入密码',
     login_btn: '登录', reg_btn: '注册并开始',
     login_tip: '开通周卡 / 月卡订阅，或使用兑换码解锁',
+    remember_me: '记住我',
     loading: '加载中…',
     ai_learning: '🌏 AI 语言学习', pick_partner: '选一个伙伴，开始沉浸式学习',
     my_native: '我的母语（字幕 / 翻译语言）', learn_target: '我要学（AI 用这门语言说话）',

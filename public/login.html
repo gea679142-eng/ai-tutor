@@ -42,6 +42,10 @@
       <label data-i18n="password">Password</label>
       <input id="password" class="input" type="password" data-i18n-ph="pw_ph" autocomplete="current-password">
     </div>
+    <label style="display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13.5px;cursor:pointer">
+      <input type="checkbox" id="rememberMe" checked style="width:18px;height:18px;accent-color:var(--brand)">
+      <span data-i18n="remember_me">Remember me</span>
+    </label>
     <button class="btn" id="submitBtn" onclick="submit()" data-fx data-i18n="login_btn">Log in</button>
     <div class="msg" id="msg"></div>
     <div class="tip" data-i18n="login_tip">Weekly / monthly subscription or redeem a code to unlock</div>
