@@ -7,10 +7,11 @@ var Auth = {
     var m = document.cookie.match(/(?:^|;\s*)tutor_token=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : '';
   },
-  setToken: function (t) {
+  setToken: function (t, remember) {
     try { localStorage.setItem(this.tokenKey, t); } catch (e) {}
-    // cookie 存 30 天
-    document.cookie = 'tutor_token=' + encodeURIComponent(t) + ';path=/;max-age=2592000;samesite=lax';
+    // remember=true 存 30 天；false 存 session（关闭浏览器失效）
+    var maxAge = remember === false ? '' : ';max-age=2592000';
+    document.cookie = 'tutor_token=' + encodeURIComponent(t) + ';path=/' + maxAge + ';samesite=lax';
   },
   clear: function () {
     try { localStorage.removeItem(this.tokenKey); } catch (e) {}

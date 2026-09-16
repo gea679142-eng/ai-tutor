@@ -136,7 +136,7 @@ function verifyPassword(password, salt, hash) {
   return crypto.timingSafeEqual(Buffer.from(test, 'hex'), Buffer.from(hash, 'hex'));
 }
 
-const ADMIN_KEY = process.env.ADMIN_KEY || 'admin888';   // 管理后台密钥（.env 可改）
+const ADMIN_KEY = process.env.ADMIN_KEY || 'mjQZDdf3IAiwJrUOxRMsuLFoyWthY8Xv';
 const TRIAL_DAYS = 3;                                     // 新注册免费试用天数
 // ============ 积分制（核心商业模式）============
 // 1 积分 ≈ 1 分钟对话（4 轮 × 15 秒）。充值档位：$9.9→50 / $19.9→120 / $39.9→400。

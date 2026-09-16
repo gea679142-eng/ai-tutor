@@ -90,7 +90,8 @@ async function submit(){
   var r=await Auth.post(endpoint,payload);
   btn.disabled=false;
   if(!r.ok) return showMsg(errText(r.data.error));
-  Auth.setToken(r.data.token);
+  var remember = document.getElementById('rememberMe').checked;
+  Auth.setToken(r.data.token, remember);
   var u=r.data.user||{};
   if(u.nativeLang) setUiLang(u.nativeLang);
   localStorage.setItem('nativeLang', u.nativeLang||getUiLang());
