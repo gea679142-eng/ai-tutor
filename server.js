@@ -438,6 +438,7 @@ app.get('/api/tts', costLimiter, async (req, res) => {
         }
         if (allBase64.length > 100) {
           const audioBuf = Buffer.from(allBase64, 'base64');
+          _u.credits = Math.round(((_u.credits || 0) - QUIZ_COST) * 100) / 100; saveDB();
           res.set('Content-Type', 'audio/mpeg');
           return res.send(audioBuf);
         }
@@ -1168,8 +1169,9 @@ app.post('/api/chat/opener', costLimiter, async (req, res) => {
     if (ctxHistory.length > 60) ctxHistory.splice(0, ctxHistory.length - 60);
     user.messages.push({ id: newMid(), ts: nowIso, mode, courseId: courseKey, role: 'ai', text: replyText, trans: aiTrans, teaching: parsed.teaching_point || '', speakLang });
     if (user.messages.length > 600) user.messages.splice(0, user.messages.length - 600);
+    user.credits = Math.round(((user.credits || 0) - CHAT_COST) * 100) / 100;
     saveDB();
-    res.json({ reply: replyText, translation: aiTrans, teaching_point: parsed.teaching_point || '', speakLang });
+    res.json({ reply: replyText, translation: aiTrans, teaching_point: parsed.teaching_point || '', speakLang, credits: user.credits });
   } catch (e) {
     console.error('Opener error:', e.message);
     res.status(500).json({ error: 'AI failed' });
