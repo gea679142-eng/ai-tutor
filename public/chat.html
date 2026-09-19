@@ -143,7 +143,7 @@ Auth.guard().then(function (u) {
 }).catch(function () {});
 
 function setStatus(s) { document.getElementById('statusText').textContent = s; }
-  function refreshBal(){ Auth.get('/api/auth/me').then(function(j){ if(j&&typeof j.credits!=='undefined') document.getElementById('balText').textContent=j.credits; }).catch(function(){}); }
+  function refreshBal(){ Auth.get('/api/auth/me').then(function(j){ var c=(j&&j.user)?j.user.credits:(j&&j.credits); if(typeof c!=='undefined') document.getElementById('balText').textContent=c; }).catch(function(){}); }
 function paintSceneChips() {
   document.querySelectorAll('.scene-chip[data-go]').forEach(function (b) {
     b.classList.toggle('on', b.getAttribute('data-go') === mode);
