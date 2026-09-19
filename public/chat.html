@@ -73,7 +73,7 @@
   <div class="avatar ring" style="position:relative"><img id="avatar" src="/images/xiaomei.jpg" alt=""></div>
   <div class="who">
     <div class="nm" id="partnerName">Mei</div>
-    <div class="st" id="statusText">online</div>
+    <div class="st" id="statusText">online · <span id="balText" style="color:var(--brand-d);font-weight:800">—</span> credits</div>
   </div>
   <span class="mode-badge chat" id="modeBadge"></span>
   <button class="iconbtn" onclick="clearChat()" data-i18n="clear_chat">Clear</button>
@@ -135,6 +135,7 @@ Auth.guard().then(function (u) {
   document.getElementById('avatar').src = teacherImg(teacherId);
   document.getElementById('callImg').src = teacherImg(teacherId);
   document.getElementById('partnerName').textContent = character === 'male' ? t('teacher_male') : t('teacher_female');
+  refreshBal();
   paintSceneChips();
   loadCoursePicker();
   if (mode === 'course' && catId && courseId) loadCourseThenOpen();
@@ -142,6 +143,7 @@ Auth.guard().then(function (u) {
 }).catch(function () {});
 
 function setStatus(s) { document.getElementById('statusText').textContent = s; }
+  function refreshBal(){ Auth.get('/api/auth/me').then(function(j){ if(j&&typeof j.credits!=='undefined') document.getElementById('balText').textContent=j.credits; }).catch(function(){}); }
 function paintSceneChips() {
   document.querySelectorAll('.scene-chip[data-go]').forEach(function (b) {
     b.classList.toggle('on', b.getAttribute('data-go') === mode);
@@ -331,7 +333,7 @@ function requestReply(text, opts) {
       var data = r.data;
       if (data.user_translation) addSub(userBubble, data.user_translation);
       if (data.speakLang) aiSpeakLang = data.speakLang;
-      if (data.reply) { addMsg(data.reply, 'ai', data.translation || '', data.teaching_point || '', data.speakLang || aiSpeakLang); return speak(data.reply, data.speakLang || aiSpeakLang); }
+      if (data.reply) { addMsg(data.reply, 'ai', data.translation || '', data.teaching_point || '', data.speakLang || aiSpeakLang); refreshBal(); return speak(data.reply, data.speakLang || aiSpeakLang); }
     }).catch(function () {}).then(function () { sending = false; setStatus(t('online')); resetIdle(); });
 }
 function send() {
